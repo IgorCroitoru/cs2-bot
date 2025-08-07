@@ -1,0 +1,5 @@
+{
+  "totalTradeLimit": 30,
+  "userTradeLimit": 5,
+  "userPauseDuration": 60000
+}

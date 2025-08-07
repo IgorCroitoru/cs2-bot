@@ -20,7 +20,9 @@ export default class BotManager{
     get isBotReady(): boolean {
         return this.bot!==null && this.bot.isReady;
     }
-   
+    get isBotPaused(): boolean {
+        return this.bot!==null && this.bot.isPaused;
+    }
     start(options: IOptions): Promise<void> {
         return new Promise((resolve, reject) => {
             async.eachSeries(
@@ -104,5 +106,6 @@ export default class BotManager{
             logger.end();
         });
     }
+    
     
 }

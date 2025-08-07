@@ -1,0 +1,2408 @@
+[
+    {
+        "attribute": [
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        128,
+                        220,
+                        226,
+                        101
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "36018860830",
+        "account_id": 1594864355,
+        "inventory": 1,
+        "def_index": 4698,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 1,
+        "tradable_after": "2024-03-02T08:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        64,
+                        114,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        193,
+                        4,
+                        67,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        56,
+                        15,
+                        15,
+                        63
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        128,
+                        220,
+                        226,
+                        101
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "36018866205",
+        "account_id": 1594864355,
+        "inventory": 2,
+        "def_index": 19,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 8,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 3,
+        "position": 2,
+        "paint_index": 969,
+        "paint_seed": 780,
+        "paint_wear": 0.5588259696960449,
+        "tradable_after": "2024-03-02T08:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        20,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        216,
+                        119,
+                        16,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        231,
+                        2,
+                        186,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        112,
+                        51,
+                        200,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39155919121",
+        "account_id": 1594864355,
+        "inventory": 15,
+        "def_index": 34,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 15,
+        "paint_index": 148,
+        "paint_seed": 577,
+        "paint_wear": 0.36330339312553406,
+        "tradable_after": "2024-08-23T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        60,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        15,
+                        253,
+                        58,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        69,
+                        164,
+                        186,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        112,
+                        51,
+                        200,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39155992573",
+        "account_id": 1594864355,
+        "inventory": 14,
+        "def_index": 2,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 14,
+        "paint_index": 47,
+        "paint_seed": 747,
+        "paint_wear": 0.36453452706336975,
+        "tradable_after": "2024-08-23T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        154,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        175,
+                        234,
+                        45,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        28,
+                        118,
+                        162,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        112,
+                        51,
+                        200,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39156060088",
+        "account_id": 1594864355,
+        "inventory": 13,
+        "def_index": 60,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 2,
+        "position": 13,
+        "paint_index": 77,
+        "paint_seed": 43,
+        "paint_wear": 0.31730735301971436,
+        "tradable_after": "2024-08-23T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        160,
+                        64
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        163,
+                        198,
+                        227,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        210,
+                        177,
+                        23,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        112,
+                        51,
+                        200,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39162272854",
+        "account_id": 1594864355,
+        "inventory": 12,
+        "def_index": 29,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 12,
+        "paint_index": 5,
+        "paint_seed": 455,
+        "paint_wear": 0.14813926815986633,
+        "tradable_after": "2024-08-23T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        0,
+                        64
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        174,
+                        235,
+                        122,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        36,
+                        37,
+                        84,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        132,
+                        201,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39170532843",
+        "account_id": 1594864355,
+        "inventory": 11,
+        "def_index": 30,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 11,
+        "paint_index": 2,
+        "paint_seed": 250,
+        "paint_wear": 0.2071729302406311,
+        "tradable_after": "2024-08-24T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        192,
+                        113,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        184,
+                        13,
+                        19,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        211,
+                        61,
+                        150,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        39,
+                        204,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39204969381",
+        "account_id": 1594864355,
+        "inventory": 10,
+        "def_index": 40,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 8,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 3,
+        "position": 10,
+        "paint_index": 967,
+        "paint_seed": 588,
+        "paint_wear": 0.29344043135643005,
+        "tradable_after": "2024-08-26T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        60,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        91,
+                        25,
+                        219,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        195,
+                        230,
+                        184,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        39,
+                        204,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39205029215",
+        "account_id": 1594864355,
+        "inventory": 9,
+        "def_index": 10,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 9,
+        "paint_index": 47,
+        "paint_seed": 438,
+        "paint_wear": 0.3611355721950531,
+        "tradable_after": "2024-08-26T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        200,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        68,
+                        181,
+                        62,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        146,
+                        204,
+                        33,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        157,
+                        251,
+                        102
+                    ]
+                }
+            },
+            {
+                "def_index": 113,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        48,
+                        26,
+                        0,
+                        0
+                    ]
+                }
+            },
+            {
+                "def_index": 290,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39678919140",
+        "account_id": 1594864355,
+        "inventory": 8,
+        "def_index": 8,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 8,
+        "paint_index": 100,
+        "paint_seed": 190,
+        "paint_wear": 0.1580069363117218,
+        "tradable_after": "2024-10-01T07:00:00.000Z",
+        "stickers": [
+            {
+                "slot": 0,
+                "sticker_id": 6704,
+                "wear": null,
+                "scale": null,
+                "rotation": null,
+                "offset_x": null,
+                "offset_y": null
+            }
+        ]
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        192,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        84,
+                        173,
+                        189,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        112,
+                        83,
+                        45,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        157,
+                        251,
+                        102
+                    ]
+                }
+            },
+            {
+                "def_index": 113,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        48,
+                        26,
+                        0,
+                        0
+                    ]
+                }
+            },
+            {
+                "def_index": 117,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        209,
+                        27,
+                        0,
+                        0
+                    ]
+                }
+            },
+            {
+                "def_index": 121,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        35,
+                        29,
+                        0,
+                        0
+                    ]
+                }
+            },
+            {
+                "def_index": 290,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            },
+            {
+                "def_index": 291,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        3,
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            },
+            {
+                "def_index": 292,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39679114723",
+        "account_id": 1594864355,
+        "inventory": 7,
+        "def_index": 40,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 7,
+        "paint_index": 96,
+        "paint_seed": 379,
+        "paint_wear": 0.16926360130310059,
+        "tradable_after": "2024-10-01T07:00:00.000Z",
+        "stickers": [
+            {
+                "slot": 0,
+                "sticker_id": 6704,
+                "wear": null,
+                "scale": null,
+                "rotation": null,
+                "offset_x": null,
+                "offset_y": null
+            },
+            {
+                "slot": 3,
+                "sticker_id": 7121,
+                "wear": null,
+                "scale": null,
+                "rotation": null,
+                "offset_x": null,
+                "offset_y": null
+            },
+            {
+                "slot": 0,
+                "sticker_id": 7459,
+                "wear": null,
+                "scale": null,
+                "rotation": null,
+                "offset_x": null,
+                "offset_y": null
+            }
+        ]
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        238,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        239,
+                        94,
+                        87,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        184,
+                        200,
+                        187,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        112,
+                        239,
+                        252,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39688450540",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 13,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 0,
+        "paint_index": 119,
+        "paint_seed": 215,
+        "paint_wear": 0.36676573753356934,
+        "tradable_after": "2024-10-02T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        60,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        221,
+                        150,
+                        1,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        99,
+                        0,
+                        9,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        112,
+                        239,
+                        252,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39688482787",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 10,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 0,
+        "paint_index": 47,
+        "paint_seed": 518,
+        "paint_wear": 0.1337905377149582,
+        "tradable_after": "2024-10-02T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        192,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        145,
+                        193,
+                        195,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        75,
+                        190,
+                        20,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        112,
+                        239,
+                        252,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39688557922",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 25,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 0,
+        "paint_index": 96,
+        "paint_seed": 391,
+        "paint_wear": 0.1452571600675583,
+        "tradable_after": "2024-10-02T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        60,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        89,
+                        113,
+                        224,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        184,
+                        224,
+                        186,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        112,
+                        239,
+                        252,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39688600936",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 10,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 0,
+        "paint_index": 47,
+        "paint_seed": 448,
+        "paint_wear": 0.36499571800231934,
+        "tradable_after": "2024-10-02T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        154,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        19,
+                        18,
+                        238,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        233,
+                        40,
+                        201,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        112,
+                        239,
+                        252,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39688706470",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 36,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 0,
+        "paint_index": 77,
+        "paint_seed": 476,
+        "paint_wear": 0.39289024472236633,
+        "tradable_after": "2024-10-02T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            },
+            {
+                "def_index": 113,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        67,
+                        30,
+                        0,
+                        0
+                    ]
+                }
+            },
+            {
+                "def_index": 137,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        22,
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39698880646",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 1209,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 8,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 3,
+        "position": 0,
+        "tradable_after": "2024-10-03T07:00:00.000Z",
+        "stickers": [
+            {
+                "slot": 0,
+                "sticker_id": 7747,
+                "wear": null,
+                "scale": null,
+                "rotation": null,
+                "offset_x": null,
+                "offset_y": null
+            }
+        ]
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            },
+            {
+                "def_index": 113,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        87,
+                        30,
+                        0,
+                        0
+                    ]
+                }
+            },
+            {
+                "def_index": 137,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        22,
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39698997337",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 1209,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 8,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 3,
+        "position": 0,
+        "tradable_after": "2024-10-03T07:00:00.000Z",
+        "stickers": [
+            {
+                "slot": 0,
+                "sticker_id": 7767,
+                "wear": null,
+                "scale": null,
+                "rotation": null,
+                "offset_x": null,
+                "offset_y": null
+            }
+        ]
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            },
+            {
+                "def_index": 113,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        83,
+                        30,
+                        0,
+                        0
+                    ]
+                }
+            },
+            {
+                "def_index": 137,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        22,
+                        0,
+                        0,
+                        0
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39699066842",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 1209,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 8,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 3,
+        "position": 0,
+        "tradable_after": "2024-10-03T07:00:00.000Z",
+        "stickers": [
+            {
+                "slot": 0,
+                "sticker_id": 7763,
+                "wear": null,
+                "scale": null,
+                "rotation": null,
+                "offset_x": null,
+                "offset_y": null
+            }
+        ]
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        13,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        25,
+                        44,
+                        16,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        94,
+                        123,
+                        220,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39699403433",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 3,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 2,
+        "position": 0,
+        "paint_index": 141,
+        "paint_seed": 576,
+        "paint_wear": 0.4306287169456482,
+        "tradable_after": "2024-10-03T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        64,
+                        60,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        178,
+                        151,
+                        27,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        203,
+                        46,
+                        201,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39699451009",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 23,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 0,
+        "paint_index": 753,
+        "paint_seed": 622,
+        "paint_wear": 0.3929351270198822,
+        "tradable_after": "2024-10-03T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        160,
+                        64
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        220,
+                        66,
+                        49,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        172,
+                        3,
+                        57,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39699514664",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 29,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 0,
+        "paint_index": 5,
+        "paint_seed": 709,
+        "paint_wear": 0.18067806959152222,
+        "tradable_after": "2024-10-03T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        192,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        46,
+                        159,
+                        139,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        241,
+                        36,
+                        195,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39699665088",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 25,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 0,
+        "paint_index": 96,
+        "paint_seed": 279,
+        "paint_wear": 0.38114121556282043,
+        "tradable_after": "2024-10-03T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        112,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        48,
+                        113,
+                        104,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        128,
+                        73,
+                        149,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39699714623",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 32,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 8,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 3,
+        "position": 0,
+        "paint_index": 960,
+        "paint_seed": 929,
+        "paint_wear": 0.2915763854980469,
+        "tradable_after": "2024-10-03T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        192,
+                        71,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        132,
+                        169,
+                        193,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        28,
+                        158,
+                        18,
+                        61
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39699725913",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 4,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 2,
+        "position": 0,
+        "paint_index": 799,
+        "paint_seed": 387,
+        "paint_wear": 0.035795316100120544,
+        "tradable_after": "2024-10-03T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        20,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        92,
+                        6,
+                        152,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        143,
+                        251,
+                        27,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39699857912",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 34,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 0,
+        "paint_index": 148,
+        "paint_seed": 304,
+        "paint_wear": 0.1523268073797226,
+        "tradable_after": "2024-10-03T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        144,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        69,
+                        100,
+                        232,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        255,
+                        167,
+                        81,
+                        63
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39699905140",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 28,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 8,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 3,
+        "position": 0,
+        "paint_index": 1152,
+        "paint_seed": 464,
+        "paint_wear": 0.8189696669578552,
+        "tradable_after": "2024-10-03T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        192,
+                        66
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        48,
+                        154,
+                        199,
+                        67
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        179,
+                        245,
+                        194,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39700409801",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 40,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 0,
+        "paint_index": 96,
+        "paint_seed": 399,
+        "paint_wear": 0.38078078627586365,
+        "tradable_after": "2024-10-03T07:00:00.000Z"
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        128,
+                        67,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 7,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        116,
+                        62,
+                        42,
+                        68
+                    ]
+                }
+            },
+            {
+                "def_index": 8,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        5,
+                        8,
+                        83,
+                        62
+                    ]
+                }
+            },
+            {
+                "def_index": 75,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        240,
+                        64,
+                        254,
+                        102
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "39700647669",
+        "account_id": 1594864355,
+        "inventory": 3221225475,
+        "def_index": 33,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 0,
+        "origin": 24,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 2,
+        "position": 0,
+        "paint_index": 782,
+        "paint_seed": 680,
+        "paint_wear": 0.20608527958393097,
+        "tradable_after": "2024-10-03T07:00:00.000Z"
+    },
+    {
+        "attribute": [],
+        "equipped_state": [],
+        "id": "17293822569102708641",
+        "account_id": 1594864355,
+        "inventory": 3221225477,
+        "def_index": 4001,
+        "quantity": null,
+        "level": null,
+        "quality": 4,
+        "flags": 24,
+        "origin": 8,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 1,
+        "position": 0
+    },
+    {
+        "attribute": [
+            {
+                "def_index": 6,
+                "value": null,
+                "value_bytes": {
+                    "type": "Buffer",
+                    "data": [
+                        0,
+                        0,
+                        250,
+                        66
+                    ]
+                }
+            }
+        ],
+        "equipped_state": [],
+        "id": "17293822569110896676",
+        "account_id": 1594864355,
+        "inventory": 3221225477,
+        "def_index": 36,
+        "quantity": null,
+        "level": null,
+        "quality": 1,
+        "flags": 24,
+        "origin": 8,
+        "custom_name": null,
+        "custom_desc": null,
+        "interior_item": null,
+        "in_use": null,
+        "style": null,
+        "original_id": null,
+        "rarity": 4,
+        "position": 0,
+        "paint_index": 125
+    }
+]

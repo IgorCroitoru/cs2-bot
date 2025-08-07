@@ -11,25 +11,19 @@ export type PollData = {
 
 export interface OfferData{
     dealId?: number
-    type?: 'deposit' | 'sale'
-    creationAck?:boolean
-    finalStateAck?:boolean
+    partnerId?:string
     errorLogs?: string
     trade_offer_expiry_at?: number;
     trade_offer_created_at?: number;
     trade_offer_finished_at?: number;
 }
 
-export interface DealErrorData {
-    dealId: number;
-    type?: 'deposit' | 'sale'; // Type of transaction
-    error: any;
-    timestamp: number;
-}
-export interface OfflineData {
-    dealErrors: {[transactionId: number]: DealErrorData}
-    offerData: {[offerId:string]:OfferData}
-  }
+// export interface DealErrorData {
+//     dealId: number;
+//     error: any;
+//     timestamp: number;
+// }
+
 
 // export type mainServerAck = {
 //     creation:boolean

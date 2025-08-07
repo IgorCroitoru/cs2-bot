@@ -1,11 +1,11 @@
-import { DealCreationStatus } from "../Deal";
-import { MEconItemExchange } from "steam-tradeoffer-manager";
-import { OfflineData } from "./PollData";
+import TradeOfferManager, { MEconItemExchange } from "steam-tradeoffer-manager";
 import DealDto from "../Dtos/DealDto";
 import CEconItem from "steamcommunity/classes/CEconItem";
 import { ExtendedMEconItemExchange } from "./ExtendedItem";
+import { InventoryQueueResponse, InventoryStatus } from "../Inventory";
+import { TaskQueueResponse } from "../AbstractTaskQueue";
 
-export type StatusType = 'needsConf' | 'pending' | 'assigned' | 'active' | 'accepted' | 'cancelled' | 'declined' | 'failed';
+// export type StatusType = 'needsConf' | 'pending' | 'assigned' | 'active' | 'accepted' | 'cancelled' | 'declined' | 'failed';
 
 export type InitQuery = {
     username?: string
@@ -13,56 +13,119 @@ export type InitQuery = {
     ready?:boolean
 }
 
-export default interface IDealCreation{
-  id: number
-  offerId?: string
-  status: DealCreationStatus
-  //error: Error | null
+export type OfferMetadata = {
+  dealId?: number
 }
-export type NewDealPayload =  DealDto| DealDto[];
+export type NewDealPayload =  DealDto
 
-export interface ResponseCallback {
-    (response?: ResponseCallbackData): void;
+export interface ResponseCallback<T = any> {
+    (response?: ResponseCallbackData<T>): void;
 }
 
 // Define callback data type
-export interface ResponseCallbackData {
+export interface ResponseCallbackData<Data = any> {
     status: 'ok' | 'error';
     error?: any
-}
-export interface ResponseCallbackInventory {
-    (info: ResponseCallbackData, inventory: CEconItem[]): void;
+    data?: Data
 }
 
-export interface OfferChangeStatePayload {
-  state: StatusType,
+export interface ResponseInventoryCallbackData extends InventoryQueueResponse {}
+export interface ResponseCallbackInventory {
+    (response: ResponseInventoryCallbackData): void;
+}
+
+export interface OfferChangeStatePayload<Metadata = any> {
+  /**
+   * A value from the {@link TradeOfferManager.ETradeOfferState} enum
+  */
+  state: number,
   trade_offer_finished_at: number | null
   offerId: string,
   sent?: MEconItemExchange[]
   received ?: ExtendedMEconItemExchange[]
+  metadata?: Metadata
 }
-export interface OfferCreationPayload {
-  error: any,
-  status: DealCreationStatus,
-  deal: IDealCreation,
+export interface OfferCreationPayload<Metadata = any> {
+  error?: any,
+  offerId?: string,
+  /**
+  * A value from the {@link TradeOfferManager.ETradeOfferState} enum
+  */
+  state?: number,
   trade_offer_created_at:number | null
   trade_offer_expiry_at:number | null
+  metadata?: Metadata
 
 }
-export interface ResponseCallbackOfflineData{
-  (info: ResponseCallbackData, data: OfflineData): void
-}
-export interface DealCreationPayload {
-  deal: DealDto,
-  callback?: ResponseCallback
+// export interface ResponseCallbackOfflineData{
+//   (info: ResponseCallbackData, data: OfflineData): void
+// }
+// export interface DealCreationPayload {
+//   deal: DealDto,
+//   callback?: ResponseCallback
+// }
+
+// Inventory Events
+export interface InventorySocketEventsIngoing {
+  "inventoryFetch": (steamId: string, callback: ResponseCallbackInventory) => void;
+  "pauseInventory": (paused: boolean, cause: string | null, pauseEnd: number, callback?: ResponseCallback) => void;
+  [key: string]: (...args:any[]) => void;
 }
 
-export interface SocketEvents{
-    offlineData:[callback:ResponseCallbackOfflineData]
-    newDeal:[NewDealPayload, callback:ResponseCallback]
-    offerCreation:[OfferCreationPayload, callback:ResponseCallback]
-    offerChangedState:[OfferChangeStatePayload, callback?:ResponseCallback]
-    inventoryFetch:[steamId: string,callback:ResponseCallbackInventory]
-    offerError:[dealId: number,error:any]
-    ready:[ready:boolean]
+export interface InventorySocketEventsOutgoing {
+  "inventoryFetched": (steamId: string, error: any, status: InventoryStatus, inventory: CEconItem[]) => void;
+  "inventoryPaused": (paused: boolean, cause: string | null, pauseEnd: number) => void;
+   [key: string]: (...args:any[]) => void;
 }
+
+// Trade Events
+export interface TradeSocketEventsIngoing {
+  "newDeal": (payload: NewDealPayload, callback: ResponseCallback<TaskQueueResponse>) => void;
+  "pauseTrade": (paused: boolean, cause: string | null, pauseEnd: number, callback?: ResponseCallback) => void;
+  [key: string]: (...args:any[]) => void;
+}
+
+export interface TradeSocketEventsOutgoing {
+  // offerError: (dealId: number, error: any) => void;
+  "offerCreation": (payload: OfferCreationPayload, callback: ResponseCallback) => void;
+  "offerChangedState": (payload: OfferChangeStatePayload, callback: ResponseCallback) => void;
+  "tradesPaused": (paused: boolean, cause: string | null, pauseEnd: number) => void;
+   [key: string]: (...args:any[]) => void;
+}
+
+// Bot Events
+export interface BotSocketEventsIngoing {
+  "pauseBot": (paused: boolean, pauseEnd: number, cause: string | null, callback?: ResponseCallback) => void;
+   [key: string]: (...args:any[]) => void;
+}
+
+export interface BotSocketEventsOutgoing {
+  // offlineData: (callback: ResponseCallbackOfflineData) => void;
+  "ready": (ready: boolean) => void;
+  "botPaused": (paused: boolean, cause: string | null, pauseEnd: number) => void;
+   [key: string]: (...args:any[]) => void;
+}
+
+export interface SocketEvents extends 
+  InventorySocketEventsIngoing,
+  InventorySocketEventsOutgoing,
+  TradeSocketEventsIngoing,
+  TradeSocketEventsOutgoing,
+  BotSocketEventsIngoing,
+  BotSocketEventsOutgoing {
+     [key: string]: (...args:any[]) => void;
+  }
+
+export interface IngoingEvents extends 
+  InventorySocketEventsIngoing,
+  TradeSocketEventsIngoing,
+  BotSocketEventsIngoing {
+     [key: string]: (...args:any[]) => void;
+  }
+
+export interface OutgoingEvents extends 
+  InventorySocketEventsOutgoing,
+  TradeSocketEventsOutgoing,
+  BotSocketEventsOutgoing {
+     [key: string]: (...args:any[]) => void;
+  }

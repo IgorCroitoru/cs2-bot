@@ -1,0 +1,572 @@
+import { EventEmitter } from 'events';
+import { logger } from '../../logger';
+import * as files from '../lib/files';
+import { OutboxEvent, OutboxConfig } from './Interfaces/OutboxEvents';
+import { OutgoingEvents } from './Interfaces/SocketEvents';
+
+export type Last<T extends any[]> = T extends [...infer H, infer L] ? L : any;
+export type AllButLast<T extends any[]> = T extends [...infer H, infer L] ? H : any[];
+export type FirstArg<T> = T extends (arg: infer Param) => infer Result ? Param : any;
+
+// Extract event parameters from OutgoingEvents
+export type EventParams<Events, K extends keyof Events> = 
+  Events[K] extends (...args: infer P) => any ? P : never;
+
+// Extract callback type from event parameters
+export type ExtractCallbackResponse<Events, K extends keyof Events> = 
+  FirstArg<Last<EventParams<Events, K>>>;
+
+// Extract payload parameters (all but the callback)
+export type ExtractPayload<Events, K extends keyof Events> = 
+  AllButLast<EventParams<Events, K>>;
+
+// Create a handler type that matches the socket.io pattern
+export type OutboxEventHandler<Events, K extends keyof Events> = 
+  (...args: ExtractPayload<Events, K>) => Promise<ExtractCallbackResponse<Events, K>>;
+
+// Create the handlers interface
+export type OutboxEventHandlers<Events = OutgoingEvents> = {
+  [K in keyof Events]?: OutboxEventHandler<Events, K>;
+};
+type UnwrapTuple<T> = T extends [infer U] ? U : T;
+
+export type ExtractPayloadExceptCallback<Events, K extends keyof Events> =
+  UnwrapTuple<AllButLast<EventParams<Events, K>>>;
+
+export class OutboxQueue extends EventEmitter {
+  private events: OutboxEvent[] = [];
+  private processing = false;
+  private paused = false;
+  private eventHandlers: Partial<OutboxEventHandlers<OutgoingEvents>> = {};
+
+  constructor(private config: OutboxConfig) {
+    super();
+    this.loadEvents();
+  }
+
+  /**
+   * Add an event to the outbox queue
+   */
+  public async addEvent<K extends keyof OutgoingEvents>(
+    type: K, 
+    payload: ExtractPayloadExceptCallback<OutgoingEvents, K>,
+    priority: number = 0,
+    maxRetries?: number,
+    timeoutMs?: number
+  ): Promise<string> {
+    const event: OutboxEvent<ExtractPayloadExceptCallback<OutgoingEvents, K>> = {
+      id: this.generateEventId(),
+      type,
+      payload,
+      timestamp: Date.now(),
+      priority,
+      retries: 0,
+      maxRetries: maxRetries ?? this.config.maxRetries,
+      status: 'pending',
+      timeoutMs: timeoutMs ?? this.config.defaultTimeoutMs
+    };
+
+    // Insert in priority order (higher priority first, then by timestamp)
+    this.insertEventSorted(event);
+    
+    // Save immediately after adding
+    if (this.config.enablePersistence) {
+      await this.saveEvents();
+    }
+
+    this.emit('eventAdded', event);
+    logger.debug(`Added outbox event: ${type} (${event.id}) with ${event.timeoutMs}ms timeout`);
+
+    // Start processing immediately if not paused and not already processing
+    if (!this.paused && !this.processing) {
+      setImmediate(() => this.processEvents());
+    }
+
+    return event.id;
+  }
+
+  /**
+   * Register a handler for a specific event type
+   */
+  public registerHandler<K extends keyof OutgoingEvents>(
+    type: K, 
+    handler: OutboxEventHandler<OutgoingEvents, K>
+  ): void {
+    this.eventHandlers[type] = handler;
+    logger.debug(`Registered handler for event type: ${type}`);
+  }
+
+  /**
+   * Register multiple handlers at once
+   */
+  public registerHandlers(handlers: Partial<OutboxEventHandlers<OutgoingEvents>>): void {
+    Object.entries(handlers).forEach(([type, handler]) => {
+      if (handler) {
+        this.registerHandler(
+          type as keyof OutgoingEvents, 
+          handler as OutboxEventHandler<OutgoingEvents, keyof OutgoingEvents>
+        );
+      }
+    });
+  }
+
+  /**
+   * Unregister a handler for a specific event type
+   */
+  public unregisterHandler(type: keyof OutgoingEvents): void {
+    delete this.eventHandlers[type];
+    logger.debug(`Unregistered handler for event type: ${type}`);
+  }
+
+  /**
+   * Process pending events continuously
+   */
+  private async processEvents(): Promise<void> {
+    if (this.processing || this.paused) return;
+    
+    this.processing = true;
+    logger.debug('Started continuous event processing');
+
+    try {
+      // Keep processing while there are pending events and not paused
+     while (!this.paused) {
+      // Find pending events ready for processing
+      const pendingEvents = this.events.filter(e => e.status === 'pending');
+      
+      if (pendingEvents.length === 0) {
+        // No pending events left, exit processing
+        logger.debug('No pending events remaining');
+        break;
+      }
+
+      const nextEvent = pendingEvents.find(e => this.isReadyForRetry(e));
+
+      if (!nextEvent) {
+        // No events ready for processing, wait a bit and check again
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+
+      try {
+        await this.processEvent(nextEvent);
+
+        // Save after each event is processed
+          if (this.config.enablePersistence) {
+            await this.saveEvents();
+          }
+
+          // Remove completed events from the queue immediately
+          if (nextEvent.status === 'completed') {
+            this.events = this.events.filter(e => e.id !== nextEvent.id);
+          }
+
+        } catch (error) {
+          logger.error(`Error processing outbox event ${nextEvent.id}:`, error);
+        }
+
+        // Small delay between events to prevent overwhelming
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+
+      logger.debug('Event processing completed - no more pending events or paused');
+
+    } finally {
+      this.processing = false;
+    }
+  }
+
+  /**
+   * Process a single event with timeout support
+   */
+  private async processEvent(event: OutboxEvent): Promise<void> {
+    const handler = this.eventHandlers[event.type];
+    if (!handler) {
+      logger.warn(`No handler registered for event type: ${event.type}`);
+      event.status = 'failed';
+      event.lastError = 'No handler registered';
+      return;
+    }
+
+    event.status = 'processing';
+    event.processingStartedAt = Date.now();
+    this.emit('eventProcessing', event);
+
+    // const timeoutMs = event.timeoutMs || this.config.defaultTimeoutMs;
+
+    try {
+      const result = await handler(event.payload);
+      event.status = 'completed';
+      this.emit('eventCompleted', event, result);
+      logger.debug(`Completed outbox event: ${event.type} (${event.id}) in ${Date.now() - (event.processingStartedAt || 0)}ms`);
+
+    } catch (error) {
+      const isTimeout = error instanceof Error && error.message.toLowerCase().includes('timeout');
+      
+      if (isTimeout) {
+        this.handleEventTimeout(event, error);
+      } else {
+        this.handleEventError(event, error);
+      }
+    }
+  }
+
+  /**
+   * Handle event timeout
+   */
+  private handleEventTimeout(event: OutboxEvent, error: any): void {
+    event.retries++;
+    event.lastError = `Timeout after ${event.timeoutMs}ms: ${error instanceof Error ? error.message : String(error)}`;
+
+    if (event.retries >= event.maxRetries) {
+      event.status = 'timeout';
+      this.emit('eventTimeout', event, error);
+      logger.error(`Event timed out after ${event.retries} retries: ${event.type} (${event.id})`);
+    } else if (this.config.enableTimeoutRetry) {
+      event.status = 'pending';
+      event.nextRetryAt = Date.now() + this.calculateRetryDelay(event.retries);
+      this.emit('eventRetrying', event, error);
+      logger.warn(`Retrying timed out event: ${event.type} (${event.id}) - attempt ${event.retries}/${event.maxRetries}`);
+    } else {
+      event.status = 'timeout';
+      this.emit('eventTimeout', event, error);
+      logger.error(`Event timed out (retry disabled): ${event.type} (${event.id})`);
+    }
+  }
+
+  /**
+   * Handle regular event error
+   */
+  private handleEventError(event: OutboxEvent, error: any): void {
+    event.retries++;
+    event.lastError = error instanceof Error ? error.message : String(error);
+
+    if (event.retries >= event.maxRetries) {
+      event.status = 'failed';
+      this.emit('eventFailed', event, error);
+      logger.error(`Failed outbox event after ${event.retries} retries: ${event.type} (${event.id})`, error);
+    } else {
+      event.status = 'pending';
+      event.nextRetryAt = Date.now() + this.calculateRetryDelay(event.retries);
+      this.emit('eventRetrying', event, error);
+      logger.warn(`Retrying outbox event: ${event.type} (${event.id}) - attempt ${event.retries}/${event.maxRetries}`);
+    }
+  }
+
+  /**
+   * Check if event is ready for retry
+   */
+  private isReadyForRetry(event: OutboxEvent): boolean {
+    if (event.status !== 'pending') return false;
+    if (!event.nextRetryAt) return true;
+    return Date.now() >= event.nextRetryAt;
+  }
+
+  /**
+   * Calculate exponential backoff delay
+   */
+  private calculateRetryDelay(retryCount: number): number {
+    const delay = Math.min(
+      this.config.retryDelayMs * Math.pow(2, retryCount - 1),
+      this.config.maxRetryDelayMs
+    );
+    // Add jitter to prevent thundering herd
+    return delay + Math.random() * 1000;
+  }
+
+  /**
+   * Insert event in sorted order (priority desc, timestamp asc)
+   */
+  private insertEventSorted(event: OutboxEvent): void {
+    const index = this.events.findIndex(e => 
+      e.priority < event.priority || 
+      (e.priority === event.priority && e.timestamp > event.timestamp)
+    );
+    
+    if (index === -1) {
+      this.events.push(event);
+    } else {
+      this.events.splice(index, 0, event);
+    }
+  }
+
+  /**
+   * Load events from file
+   */
+  private async loadEvents(): Promise<void> {
+    if (!this.config.enablePersistence) return;
+
+    try {
+      const data = await files.readFile(this.config.filePath, true);
+      if (Array.isArray(data)) {
+        this.events = data.filter(this.isValidOutboxEvent);
+        this.sortEvents();
+        logger.debug(`Loaded ${this.events.length} outbox events from storage`);
+      }
+    } catch (error) {
+      logger.warn('Failed to load outbox events:', error);
+      this.events = [];
+    }
+  }
+
+  /**
+   * Save events to file
+   */
+  private async saveEvents(): Promise<void> {
+    if (!this.config.enablePersistence) return;
+
+    try {
+      // Only persist events that are not completed
+      const eventsToSave = this.events.filter(e => e.status !== 'completed');
+      await files.writeFile(this.config.filePath, eventsToSave, true);
+      logger.debug(`Saved ${eventsToSave.length} outbox events to storage`);
+    } catch (error) {
+      logger.error('Failed to save outbox events:', error);
+    }
+  }
+
+  /**
+   * Sort events by priority and timestamp
+   */
+  private sortEvents(): void {
+    this.events.sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return b.priority - a.priority; // Higher priority first
+      }
+      return a.timestamp - b.timestamp; // Earlier timestamp first
+    });
+  }
+
+  /**
+   * Validate event structure
+   */
+  private isValidOutboxEvent(event: any): event is OutboxEvent {
+    return event && 
+           typeof event.id === 'string' &&
+           typeof event.type === 'string' &&
+           typeof event.timestamp === 'number' &&
+           typeof event.priority === 'number' &&
+           typeof event.retries === 'number' &&
+           typeof event.maxRetries === 'number' &&
+           typeof event.status === 'string';
+  }
+
+  /**
+   * Generate unique event ID
+   */
+  private generateEventId(): string {
+    return `${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  }
+
+  /**
+   * Pause event processing
+   */
+  public pause(): void {
+    if (this.paused) return;
+    
+    this.paused = true;
+    this.emit('processingPaused');
+    logger.debug('OutboxQueue processing paused');
+  }
+
+  /**
+   * Resume event processing
+   */
+  public async resume(): Promise<void> {
+    if (!this.paused) return;
+    
+    this.paused = false;
+    this.emit('processingResumed');
+    logger.debug('OutboxQueue processing resumed');
+    
+    // Start processing if there are pending events
+    if (this.events.some(e => e.status === 'pending' && this.isReadyForRetry(e))) {
+      await this.processEvents();
+    }
+  }
+
+  /**
+   * Check if processing is paused
+   */
+  public isPaused(): boolean {
+    return this.paused;
+  }
+
+  /**
+   * Check if currently processing events
+   */
+  public isProcessing(): boolean {
+    return this.processing;
+  }
+
+  /**
+   * Get queue statistics
+   */
+  public getStats() {
+    const stats = {
+      total: this.events.length,
+      pending: 0,
+      processing: 0,
+      completed: 0,
+      failed: 0,
+      cancelled: 0,
+      timeout: 0,
+      byType: {} as Record<string, number>,
+      isProcessing: this.processing,
+      isPaused: this.paused
+    };
+
+    this.events.forEach(event => {
+      stats[event.status]++;
+      stats.byType[event.type] = (stats.byType[event.type] || 0) + 1;
+    });
+
+    return stats;
+  }
+
+  /**
+   * Get events by type
+   */
+  public getEventsByType(type: keyof OutgoingEvents): OutboxEvent[] {
+    return this.events.filter(e => e.type === type);
+  }
+
+  /**
+   * Get event by ID
+   */
+  public getEvent(eventId: string): OutboxEvent | undefined {
+    return this.events.find(e => e.id === eventId);
+  }
+
+  /**
+   * Force immediate processing of pending events
+   */
+  public async forceProcess(): Promise<void> {
+    if (!this.processing && !this.paused) {
+      await this.processEvents();
+    }
+  }
+
+  /**
+   * Clear completed events
+   */
+  public async clearCompleted(): Promise<number> {
+    const initialCount = this.events.length;
+    this.events = this.events.filter(e => e.status !== 'completed');
+    const removedCount = initialCount - this.events.length;
+
+    if (removedCount > 0 && this.config.enablePersistence) {
+      await this.saveEvents();
+      logger.debug(`Cleared ${removedCount} completed outbox events`);
+    }
+
+    return removedCount;
+  }
+
+  /**
+   * Cancel an event by ID
+   */
+  public async cancelEvent(eventId: string): Promise<boolean> {
+    const event = this.events.find(e => e.id === eventId);
+    if (!event) return false;
+
+    event.status = 'cancelled';
+    
+    if (this.config.enablePersistence) {
+      await this.saveEvents();
+    }
+
+    this.emit('eventCancelled', event);
+    return true;
+  }
+
+  /**
+   * Retry a timed out event
+   */
+  public async retryTimedOutEvent(eventId: string): Promise<boolean> {
+    const event = this.events.find(e => e.id === eventId && e.status === 'timeout');
+    if (!event) return false;
+
+    event.status = 'pending';
+    event.retries = 0; // Reset retries for manual retry
+    event.nextRetryAt = undefined;
+    event.lastError = undefined;
+    event.processingStartedAt = undefined;
+
+    if (this.config.enablePersistence) {
+      await this.saveEvents();
+    }
+
+    this.emit('eventRetried', event);
+    logger.debug(`Manually retrying timed out event: ${event.type} (${event.id})`);
+    
+    // Process immediately if not paused
+    if (!this.paused) {
+      setImmediate(() => this.processEvents());
+    }
+    return true;
+  }
+
+  /**
+   * Get events by status including timeout
+   */
+  public getEventsByStatus(status: OutboxEvent['status']): OutboxEvent[] {
+    return this.events.filter(e => e.status === status);
+  }
+
+  /**
+   * Get all timed out events
+   */
+  public getTimedOutEvents(): OutboxEvent[] {
+    return this.events.filter(e => e.status === 'timeout');
+  }
+
+  /**
+   * Clear timed out events
+   */
+  public async clearTimedOutEvents(): Promise<number> {
+    const initialCount = this.events.length;
+    this.events = this.events.filter(e => e.status !== 'timeout');
+    const removedCount = initialCount - this.events.length;
+
+    if (removedCount > 0 && this.config.enablePersistence) {
+      await this.saveEvents();
+      logger.debug(`Cleared ${removedCount} timed out events`);
+    }
+
+    return removedCount;
+  }
+  public async retryEvent(eventId: string): Promise<boolean> {
+    const event = this.events.find(e => e.id === eventId && e.status === 'failed');
+    if (!event) return false;
+
+    event.status = 'pending';
+    event.retries = 0;
+    event.nextRetryAt = undefined;
+    event.lastError = undefined;
+
+    if (this.config.enablePersistence) {
+      await this.saveEvents();
+    }
+
+    this.emit('eventRetried', event);
+    
+    // Process events immediately if not paused
+    if (!this.paused) {
+      setImmediate(() => this.processEvents());
+    }
+
+    return true;
+  }
+
+  /**
+   * Cleanup and shutdown
+   */
+  public async shutdown(): Promise<void> {
+    if (this.config.enablePersistence) {
+      await this.saveEvents();
+    }
+
+    this.removeAllListeners();
+    logger.debug('Outbox queue shutdown complete');
+  }
+}

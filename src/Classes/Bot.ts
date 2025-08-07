@@ -13,12 +13,10 @@ import * as files from '../lib/files'
 import jwt from 'jsonwebtoken'
 import {Handler, OnRun} from '../Handler/Handler';
 import async, { reject } from 'async'
-import botManager from './BotManager';
+import BotManager from './BotManager';
 import { PollData } from './Interfaces/PollData';
 import { BotEvents } from './Interfaces/Events';
 import config from '../../config';
-import Trades from './Trades';
-import Queue from './Queue';
 import GlobalOffensive from 'globaloffensive';
 export class Bot extends EventEmitter {
     public steamClient: SteamUser;
@@ -27,23 +25,19 @@ export class Bot extends EventEmitter {
     public community: SteamCommunity;
     readonly handler:Handler
     public ready:boolean = false;
+    private _paused: boolean = false;
     private readonly maxLoginAttemptsWithinPeriod: number = 3;
     private readonly loginPeriodTime: number = 60 * 1000;
 
     private loginAttempts: Dayjs[] = [];
-    private auth: string = "";
-    private cookies: string[] = [];
     //private storageDir: string;
     private consecutiveSteamGuardCodesWrong: number = 0;
     private sessionReplaceCount: number = 0;
-    private readonly maxLoginAttempts: number = 2;
-    private readonly loginRetryDelay: number = 5000;
-    private timeOffset?: number = undefined;
     public options:IOptions;
-    public botManager: botManager
+    public botManager: BotManager
     private relogin = false
     // public trades?: Trades
-    constructor(options:IOptions, botManager:botManager) {
+    constructor(options:IOptions, botManager:BotManager) {
         super();
         
         this.options = options
@@ -70,7 +64,19 @@ export class Bot extends EventEmitter {
         
         
     }
-   
+    public get isPaused(): boolean {
+        return this._paused;
+    }
+    // public set paused(value: boolean) {
+    //     this._paused = value;
+    //     logger.info(`Bot is ${value ? 'paused' : 'unpaused'}`);
+    //     this.emit('paused', this._paused);
+    // }
+    public pause(pause: boolean,pauseEnd: number, cause: string | null = null): void {
+        this._paused = pause;
+        logger.info(`Bot is paused: ${cause}`);
+        this.emit('paused', this._paused, cause, pauseEnd);
+    }
     async start(): Promise<void> {
         this.bindEventHandlers();
         return new Promise((resolve, reject) => {
@@ -160,10 +166,10 @@ export class Bot extends EventEmitter {
         //     logger.log(err)
         // })
     }
-    on<K extends keyof BotEvents>(event: K, listener: (...args: BotEvents[K]) => void): this {
+    override on<K extends keyof BotEvents>(event: K, listener: (...args: BotEvents[K]) => void): this {
         return super.on(event, listener);
     }
-    emit<K extends keyof BotEvents>(event: K, ...args: BotEvents[K]): boolean {
+    override emit<K extends keyof BotEvents>(event: K, ...args: BotEvents[K]): boolean {
         return super.emit(event, ...args);
     }
     private bindEventHandlers() {

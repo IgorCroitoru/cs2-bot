@@ -5,10 +5,19 @@ import * as files from '../lib/files'
 import TradeOfferManager from "steam-tradeoffer-manager";
 import {   PollData } from "../Classes/Interfaces/PollData";
 import DealDto from "../Classes/Dtos/DealDto";
+
+export interface PauseState {
+    isPaused: boolean;
+    pauseEndTime: number | null;
+    pauseReason: string | null;
+    pausedAt: number | null;
+}
+
 export interface OnRun {
     loginAttempts?: number[];
     pollData?: PollData;
-    dealQueue?: DealDto[]
+    dealQueue?: DealDto[];
+    pauseState?: PauseState;
 }
 
 export class Handler {
@@ -29,20 +38,26 @@ export class Handler {
         this.startPoller();
         
         const loginAttempts = await files.readFile(this.paths.files.loginAttempts, true);
-        const pollData:PollData = await files.readFile(this.paths.files.pollData,true)
-        // const depositQueue:DepositDto[] = await files.readFile(this.paths.files.depositQueue,true)
+        const pollData:PollData = await files.readFile(this.paths.files.pollData,true);
+        const pauseState:PauseState = await files.readFile(this.paths.files.pauseState, true);
+        
         return { 
             loginAttempts: (loginAttempts && Array.isArray(loginAttempts)) ? loginAttempts as number[] : [],
             pollData: pollData ?? {},
+            pauseState: pauseState ?? {
+                isPaused: false,
+                pauseEndTime: null,
+                pauseReason: null,
+                pausedAt: null
+            }
             // depositQueue: (depositQueue && Array.isArray(depositQueue)) ? depositQueue as DepositDto[] : [] 
         }
     }
     
-    // onPollData(pollData: any): void {
-    //     files.writeFile(this.paths.files.pollData, pollData, true).catch(err => {
-    //         logger.warn('Failed to save polldata: ', err);
-    //     });
-    // }
+    onShutdown(): void {
+        this.stopPoller();
+        
+    }
 
 
     // refreshPollDataPath() {
@@ -81,8 +96,9 @@ export class Handler {
     //         });
     // }
     async onPollData(pollData:PollData):Promise<void>{
-        await files.waitForWriting()
-        await files.writeFile(this.paths.files.pollData,pollData,true)
+        await files.writeFile(this.paths.files.pollData,pollData,true).catch(err => {
+            logger.warn('Failed to save polldata: ', err);
+        });
     }
     
     // async onDepositError(depositError: DepositErrorData): Promise<void> {
@@ -122,11 +138,147 @@ export class Handler {
         });
     }
 
+    // ============================================================================
+    // PAUSE STATE MANAGEMENT
+    // ============================================================================
+
+    async onPauseStateChange(pauseState: PauseState): Promise<void> {
+        try {
+            await files.writeFile(this.paths.files.pauseState, pauseState, true);
+            logger.info('Pause state saved:', {
+                isPaused: pauseState.isPaused,
+                reason: pauseState.pauseReason,
+                endTime: pauseState.pauseEndTime ? new Date(pauseState.pauseEndTime).toISOString() : null
+            });
+        } catch (err) {
+            logger.warn('Failed to save pause state: ', err);
+        }
+    }
+
+    async pauseBot(pauseDuration: number, reason: string): Promise<void> {
+        const pauseState: PauseState = {
+            isPaused: true,
+            pauseEndTime: Date.now() + pauseDuration,
+            pauseReason: reason,
+            pausedAt: Date.now()
+        };
+
+        await this.onPauseStateChange(pauseState);
+        logger.warn(`Bot paused for ${pauseDuration/60000} minutes until ${new Date(pauseState.pauseEndTime!).toISOString()}: ${reason}`);
+    }
+
+    async resumeBot(): Promise<void> {
+        const pauseState: PauseState = {
+            isPaused: false,
+            pauseEndTime: null,
+            pauseReason: null,
+            pausedAt: null
+        };
+
+        await this.onPauseStateChange(pauseState);
+        logger.info('Bot resumed');
+    }
+
+    async getPauseState(): Promise<PauseState> {
+        try {
+            const pauseState = await files.readFile(this.paths.files.pauseState, true);
+            return pauseState ?? {
+                isPaused: false,
+                pauseEndTime: null,
+                pauseReason: null,
+                pausedAt: null
+            };
+        } catch (err) {
+            logger.warn('Failed to read pause state, assuming not paused: ', err);
+            return {
+                isPaused: false,
+                pauseEndTime: null,
+                pauseReason: null,
+                pausedAt: null
+            };
+        }
+    }
+
+    async checkAndResolvePauseState(): Promise<boolean> {
+        const pauseState = await this.getPauseState();
+        
+        if (pauseState.isPaused && pauseState.pauseEndTime) {
+            const now = Date.now();
+            
+            // Check if pause has expired
+            if (now >= pauseState.pauseEndTime) {
+                await this.resumeBot();
+                logger.info('Pause expired, bot automatically resumed');
+                return false; // Not paused anymore
+            }
+            
+            return true; // Still paused
+        }
+        
+        return pauseState.isPaused;
+    }
+
+    getPauseTimeRemaining(pauseState: PauseState): number {
+        if (!pauseState.isPaused || !pauseState.pauseEndTime) {
+            return 0;
+        }
+        return Math.max(0, pauseState.pauseEndTime - Date.now());
+    }
+
+    formatPauseTimeRemaining(pauseState: PauseState): string {
+        const remaining = this.getPauseTimeRemaining(pauseState);
+        if (remaining === 0) {
+            return 'Not paused';
+        }
+
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+
+        if (minutes > 0) {
+            return `${minutes}m ${seconds}s`;
+        } else {
+            return `${seconds}s`;
+        }
+    }
+
+    // ============================================================================
+    // STATUS UTILITIES
+    // ============================================================================
+
+    async getBotStatus() {
+        const pauseState = await this.getPauseState();
+        const isCurrentlyPaused = await this.checkAndResolvePauseState();
+        
+        return {
+            ready: this.bot.ready,
+            paused: isCurrentlyPaused,
+            pauseInfo: pauseState.isPaused ? {
+                reason: pauseState.pauseReason,
+                pausedAt: pauseState.pausedAt ? new Date(pauseState.pausedAt).toISOString() : null,
+                endTime: pauseState.pauseEndTime ? new Date(pauseState.pauseEndTime).toISOString() : null,
+                timeRemaining: this.formatPauseTimeRemaining(pauseState),
+                timeRemainingMs: this.getPauseTimeRemaining(pauseState)
+            } : null,
+            acceptingCommands: this.bot.ready && !isCurrentlyPaused
+        };
+    }
+
     private startPoller(): void {
         if (this.poller === null) {
-            this.poller = setInterval(() => {
-                // Polling logic here
-            }, 1000);
+            this.poller = setInterval(async () => {
+                try {
+                    // Check if pause has expired and auto-resume if needed
+                    await this.checkAndResolvePauseState();
+                    
+                    // Add other polling logic here
+                    // - Check file system health
+                    // - Monitor queue status
+                    // - Check bot connection status
+                    
+                } catch (err) {
+                    logger.error('Error in poller:', err);
+                }
+            }, 5000); // Check every 5 seconds
             logger.debug('Poller started');
         }
     }

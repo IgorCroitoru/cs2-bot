@@ -2,6 +2,7 @@ import fs from 'fs';
 import writeFileAtomic from 'write-file-atomic';
 import path from 'path';
 import timersPromises from 'timers/promises';
+import { exponentialBackoff } from '../utils';
 
 
 let filesBeingSaved = 0;
@@ -111,7 +112,4 @@ export function waitForWriting(checks = 0): Promise<void> {
             resolve(waitForWriting(checks + 1));
         });
     });
-}
-export function exponentialBackoff(n: number, base = 1000): number {
-    return Math.pow(2, n) * base + Math.floor(Math.random() * base);
 }

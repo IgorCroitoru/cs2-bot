@@ -1,7 +1,6 @@
 import CEconItem from "steamcommunity/classes/CEconItem";
-import { StatusType } from "../Classes/Interfaces/SocketEvents";
 import { Sticker } from "../core/entities/ItemInv";
-import { EFullCategory, EGlovesCategory, fullCategorySet, glovesCategorySet } from "./category-enums";
+import { EFullCategory } from "./category-enums";
 
 export function delay(ms:number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -99,20 +98,21 @@ export function ensureArray<T>(itemOrArray: T | T[]): T[] {
 // "CanceledBySecondFactor": 10;
 // /* The trade has been placed on hold */
 // "InEscrow": 11;
-export function getState(s:number):StatusType{
-    if([1,4,5,8,11].includes(s)){
-        return 'failed'
-    }
-    else if([3].includes(s)){
-        return 'accepted'
-    }
-    else if([6,10].includes(s)) return 'cancelled'
-    else if([7].includes(s)) return 'declined'
-    else if([2].includes(s)) return 'active'
-    else if([9].includes(2)) return 'needsConf'
-    else return 'failed'
+// export function getState(s:number):StatusType{
+//     if([1,4,5,8,11].includes(s)){
+//         return 'failed'
+//     }
+//     else if([3].includes(s)){
+//         return 'accepted'
+//     }
+//     else if([6,10].includes(s)) return 'cancelled'
+//     else if([7].includes(s)) return 'declined'
+//     else if([2].includes(s)) return 'active'
+//     else if([9].includes(2)) return 'needsConf'
+//     else return 'failed'
     
-}
+// }
+
 
 export function getItemCategory(item: CEconItem): EFullCategory | null {
     try {
@@ -148,6 +148,3 @@ export function getItemCategory(item: CEconItem): EFullCategory | null {
     }
   }
   
- const item = new CEconItem('','','')
- const i = {...item}
- 

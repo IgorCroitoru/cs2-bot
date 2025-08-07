@@ -1,4 +1,4 @@
-import CEconItem from "steamcommunity/classes/CEconItem"
+import  CEconItem from "steamcommunity/classes/CEconItem"
 import SteamID from "steamid"
 export default class DealDto{
     public id:number

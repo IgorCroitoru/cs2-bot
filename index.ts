@@ -5,15 +5,13 @@ import { logger } from "./logger";
 import ON_DEATH from 'death';
 import BotManager from "./src/Classes/BotManager";
 import HttpManager from "./src/Classes/HttpManager";
-import Trades from "./src/Classes/Trades";
-import FS from 'fs'
-import CEconItem from "steamcommunity/classes/CEconItem";
-import SteamID from "steamid";
-import TradesProcessor from "./src/Classes/TradesEventsHandler";
+import TradesProcessor from "./src/Classes/TradesProcessor";
 import { getSocketClient, setupSocketClient,SocketClient } from "./src/socket";
 import config from "./config";
-import InventoryProcessor from "./src/Classes/InvetoryEventsHandler";
-import Inventory from "./src/Classes/Inventory";
+import InventoryProcessor from "./src/Classes/InventoryProcessor";
+import { NewInventory } from "./src/Classes/NewInventory";
+import { NewTrades } from "./src/Classes/NewTrades";
+import { OutboxQueue } from "./src/Classes/OutboxQueue";
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const botManager: BotManager = new BotManager();
@@ -26,10 +24,15 @@ async function startBotManager() {
             authCode: String(process.env.USER_2_SECRET_KEY)
         });
         if(botManager.bot){
-            const tradeManager = new Trades(botManager.bot)
-            const inventory = new Inventory(botManager.bot)
+            const tradeManager = new NewTrades(botManager.bot, {
+                delayBetweenTasks: config.offer.delayBetweenOffers,
+                maxRetries: config.offer.maxRetries,
+            })
+            const inventory = new NewInventory(botManager.bot, {
+                delayBetweenTasks: config.inventory.delayBetweenReq,
+                maxRetries:config.inventory.maxRetries,
+            })
             const httpManager = new HttpManager(inventory);
-            httpManager.start();
             setupSocketClient({
                 serverUrl: String(process.env.BOT_MANAGER_SOCKET),
                 reconnectAttempts: config.socket.reconnectAttempts,
@@ -41,12 +44,21 @@ async function startBotManager() {
                 ready: botManager.isBotReady
             })
             socketClient=getSocketClient()
-            const tradesProcessor:TradesProcessor = new TradesProcessor(tradeManager,socketClient)
-            const inventProcessor:InventoryProcessor = new InventoryProcessor(inventory,socketClient)
+            const outboxQueue = new OutboxQueue({
+                filePath: botManager.bot.handler.getPaths.files.outboxEvents,
+                maxRetries: 5,
+                retryDelayMs: 1000,
+                maxRetryDelayMs: 30000,
+                enablePersistence: true,
+
+            })
+            const tradesProcessor:TradesProcessor = new TradesProcessor(tradeManager,socketClient.getSocket(),outboxQueue)
+            const inventProcessor:InventoryProcessor = new InventoryProcessor(inventory,socketClient.getSocket())
             await Promise.all([
                 tradesProcessor.start(),
                 inventProcessor.start()
             ])
+            httpManager.start();
         }
         
     } catch (err) {
@@ -75,7 +87,12 @@ ON_DEATH({ uncaughtException: true })((signalOrErr, origin?: string | Error) => 
     const error = origin instanceof Error ? origin : signalOrErr instanceof Error ? signalOrErr : null;
 
     if (crashed && error) {
-        logger.error('Bot crashed:', error, origin, signalOrErr);
+        logger.error('Bot crashed:', {
+            message: error.message,
+            stack: error.stack, // This contains the line numbers and call stack
+            origin: origin,
+            signal: signalOrErr
+        });
 
         
 

@@ -1,4 +1,3 @@
-
 export default  {
     http: {
         port: 3001
@@ -10,12 +9,15 @@ export default  {
     },
     offer:{
         delayBetweenOffers: 4000,
+        maxRetries: 3,
         delayBetweenInventoryFetch: 4000,
         delayBetweenOfferDecline: 2000,
-        cancelTime: 10 * 60 * 1000
+        cancelTime: 10 * 60 * 1000,
+        rejectEscrow: true,
     },
     inventory:{
-        delayBetweenReq: 2500
+        delayBetweenReq: 2500,
+        maxRetries: 3,
     },
     rates:{
         limitExceeded: 60 * 60 * 1000

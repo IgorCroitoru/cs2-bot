@@ -8,6 +8,8 @@ interface FilePaths {
     cookies: string;
     dealError: string;
     dealQueue: string;
+    pauseState: string;
+    outboxEvents: string;
     dir: string;
 }
 
@@ -56,6 +58,8 @@ export default function genPaths(steamAccountName: string, maxPollDataSizeMB = 5
             loginAttempts: path.join(baseDir, 'loginattempts.json'),
             cookies:  path.join(baseDir, 'cookies.json'),
             dealError: path.join(baseDir, 'dealsError.json'),
+            pauseState: path.join(baseDir, 'pauseState.json'),
+            outboxEvents: path.join(baseDir, 'outboxEvents.json'),
             dir: baseDir
         },
     };
