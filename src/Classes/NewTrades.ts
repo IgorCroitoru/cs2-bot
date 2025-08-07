@@ -93,13 +93,57 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
       }
     });
   }
+  public override shouldPause(task: TaskItem<DealDto>): {
+    pause: boolean;
+    reason?: string;
+    time?: number;
+  } {
+    const activeOffers = this.getActiveOffers(
+      this.bot.tradeManager.pollData as PollData
+    );
 
-  public override queueSkipCondition(taskData: TaskItem<DealDto>): boolean {
-      const activeOffers = this.getActiveOffers(this.bot.tradeManager.pollData as PollData);
-      const userActiveCount = [...Object.values(activeOffers.sent), ...Object.values(activeOffers.received)].filter(
-        (offer) => offer.partnerId === taskData.data.userId64
-      ).length;
-      return userActiveCount >= this._pauseConfig.userTradeLimit;
+    const totalActiveCount =
+      Object.keys(activeOffers.sent).length +
+      Object.keys(activeOffers.received).length;
+
+    if (totalActiveCount >= this._pauseConfig.totalTradeLimit) {
+      return {
+        pause: true,
+        reason: EPauseReason.OFFER_LIMIT_EXCEEDED,
+        time: this._pauseConfig.userPauseDuration,
+      };
+    }
+    const usersOffersCount = new Map<string, number>();
+    let everyGotFive = true;
+
+    for (const offer of Object.values(activeOffers.sent)) {
+      const userId = offer.partnerId;
+      if (userId) {
+        usersOffersCount.set(userId, (usersOffersCount.get(userId) || 0) + 1);
+      }
+    }
+    for (const [userId, count] of usersOffersCount.entries()) {
+      if (count < this._pauseConfig.userTradeLimit) {
+        everyGotFive = false;
+        break;
+      }
+    }
+    if (everyGotFive) {
+      return { pause: true, reason: EPauseReason.USER_LIMIT_EXCEEDED, time: 0 };
+    }
+
+    return { pause: false };
+  }
+
+  public override requeueCondition(taskData: TaskItem<DealDto>): boolean {
+    const activeOffers = this.getActiveOffers(
+      this.bot.tradeManager.pollData as PollData
+    );
+    const userActiveCount = [
+      ...Object.values(activeOffers.sent),
+      ...Object.values(activeOffers.received),
+    ].filter((offer) => offer.partnerId === taskData.data.userId64).length;
+    return userActiveCount >= this._pauseConfig.userTradeLimit;
   }
   // Check if we can resume from offer limit pause
   private async checkAndResumeFromOfferLimit(): Promise<void> {
@@ -186,52 +230,52 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
   }
 
   // Check if we can send an offer (not at user limit or total limit)
-  async canSendOffer(userId: string): Promise<{
-    canSend: boolean;
-    reason?: EPauseReason;
-    totalTrades?: number;
-    userTrades?: number;
-  }> {
-    const activeOffers = this.getActiveOffers(
-      this.bot.tradeManager.pollData as PollData
-    );
-    const totalActiveCount =
-      Object.keys(activeOffers.sent).length +
-      Object.keys(activeOffers.received).length;
-    const userActiveCount = [
-      Object.values(activeOffers.sent),
-      ...Object.values(activeOffers.received).filter(
-        (offer) => offer.partnerId === userId
-      ),
-    ].length;
+  // async canSendOffer(userId: string): Promise<{
+  //   canSend: boolean;
+  //   reason?: EPauseReason;
+  //   totalTrades?: number;
+  //   userTrades?: number;
+  // }> {
+  //   const activeOffers = this.getActiveOffers(
+  //     this.bot.tradeManager.pollData as PollData
+  //   );
+  //   const totalActiveCount =
+  //     Object.keys(activeOffers.sent).length +
+  //     Object.keys(activeOffers.received).length;
+  //   const userActiveCount = [
+  //     Object.values(activeOffers.sent),
+  //     ...Object.values(activeOffers.received).filter(
+  //       (offer) => offer.partnerId === userId
+  //     ),
+  //   ].length;
 
-    const totalLimit = this._pauseConfig.totalTradeLimit;
-    const userLimit = this._pauseConfig.userTradeLimit;
+  //   const totalLimit = this._pauseConfig.totalTradeLimit;
+  //   const userLimit = this._pauseConfig.userTradeLimit;
 
-    if (totalActiveCount >= totalLimit) {
-      return {
-        canSend: false,
-        reason: EPauseReason.OFFER_LIMIT_EXCEEDED,
-        totalTrades: totalActiveCount,
-        userTrades: userActiveCount,
-      };
-    }
+  //   if (totalActiveCount >= totalLimit) {
+  //     return {
+  //       canSend: false,
+  //       reason: EPauseReason.OFFER_LIMIT_EXCEEDED,
+  //       totalTrades: totalActiveCount,
+  //       userTrades: userActiveCount,
+  //     };
+  //   }
 
-    if (userActiveCount >= userLimit) {
-      return {
-        canSend: false,
-        reason: EPauseReason.USER_LIMIT_EXCEEDED,
-        totalTrades: totalActiveCount,
-        userTrades: userActiveCount,
-      };
-    }
+  //   if (userActiveCount >= userLimit) {
+  //     return {
+  //       canSend: false,
+  //       reason: EPauseReason.USER_LIMIT_EXCEEDED,
+  //       totalTrades: totalActiveCount,
+  //       userTrades: userActiveCount,
+  //     };
+  //   }
 
-    return {
-      canSend: true,
-      totalTrades: totalActiveCount,
-      userTrades: userActiveCount,
-    };
-  }
+  //   return {
+  //     canSend: true,
+  //     totalTrades: totalActiveCount,
+  //     userTrades: userActiveCount,
+  //   };
+  // }
 
   // // Getter for dealError
   // get dealError(): {[dealId: number]: DealErrorData} {
@@ -387,23 +431,8 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
     // // Check if we can send an offer to this user (user limit and total limit)
     // const canSend = await this.canSendOffer(task.data.userId64);
     // if (!canSend.canSend) {
-      
+
     // }
-    
-    const activeOffers = this.getActiveOffers(
-      this.bot.tradeManager.pollData as PollData
-    );
-    const totalActiveCount =
-      Object.keys(activeOffers.sent).length +
-      Object.keys(activeOffers.received).length;
-    const userActiveCount = [
-      Object.values(activeOffers.sent),
-      ...Object.values(activeOffers.received).filter(
-        (offer) => offer.partnerId === task.data.userId64
-      ),
-    ].length;
-
-
 
     const uniqReceive = task.data.items_to_receive
       ? this.removeDuplicates(task.data.items_to_receive)
@@ -517,7 +546,7 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
     error: any
   ): Promise<void> {
     task.retries++;
-   
+
     const retryDelay = Math.min(1000 * Math.pow(2, task.retries), 30000);
 
     setTimeout(() => {

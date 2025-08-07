@@ -214,7 +214,7 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
    * @param taskData 
    * @returns true if task should be skipped and requeued, false otherwise
    */
-  queueSkipCondition(taskData: TaskItem<T>): boolean {
+  requeueCondition(taskData: TaskItem<T>): boolean {
     return false; // Default implementation, can be overridden
   }
 
@@ -227,6 +227,14 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     this.jobSet.add(task.id);
   }
 
+  shouldPause(task: TaskItem<T>): {pause: boolean, reason?: string, time?: number} {
+    return {
+      pause: false,
+      reason: undefined,
+      time: undefined
+    }
+
+  }
   public async process(): Promise<void> {
     if (
       this.processing ||
@@ -240,6 +248,11 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     this.processing = true;
 
     while (this.queue.length > 0 && !this._paused && this.bot.ready) {
+      if (this.shouldPause(this.queue[0]).pause) {
+        const pauseInfo = this.shouldPause(this.queue[0]);
+        this.pause(pauseInfo.time || this.config.defaultPauseDuration || 0, pauseInfo.reason ?? null);
+        return;
+      }
       const task = this.queue.shift()!;
       this.jobSet.delete(task.id);
 
@@ -248,7 +261,7 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
       }
 
       try {
-        const shouldSkip = this.queueSkipCondition(task);
+        const shouldSkip = this.requeueCondition(task);
         if (shouldSkip) {
           this.requeueTask(task);
           continue; 
