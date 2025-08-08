@@ -6,18 +6,27 @@ import TradeOfferManager from "steam-tradeoffer-manager";
 import {   PollData } from "../Classes/Interfaces/PollData";
 import DealDto from "../Classes/Dtos/DealDto";
 
-export interface PauseState {
-    isPaused: boolean;
-    pauseEndTime: number | null;
-    pauseReason: string | null;
-    pausedAt: number | null;
+export interface PauseState 
+{
+    paused: boolean;
+    reason?: string;
+    pauseEndTime?: number;
+    timestamp: number; 
+}
+
+export type PauseType = 'bot' | 'trades' | 'inventory';
+
+export interface Pause {
+      bot: PauseState;
+      trades?: PauseState;
+      inventory?: PauseState;
 }
 
 export interface OnRun {
     loginAttempts?: number[];
     pollData?: PollData;
     dealQueue?: DealDto[];
-    pauseState?: PauseState;
+    pauseStates?: Pause;
 }
 
 export class Handler {
@@ -39,17 +48,12 @@ export class Handler {
         
         const loginAttempts = await files.readFile(this.paths.files.loginAttempts, true);
         const pollData:PollData = await files.readFile(this.paths.files.pollData,true);
-        const pauseState:PauseState = await files.readFile(this.paths.files.pauseState, true);
+        const pauseStates = await this.getAllPauseStates();
         
         return { 
             loginAttempts: (loginAttempts && Array.isArray(loginAttempts)) ? loginAttempts as number[] : [],
             pollData: pollData ?? {},
-            pauseState: pauseState ?? {
-                isPaused: false,
-                pauseEndTime: null,
-                pauseReason: null,
-                pausedAt: null
-            }
+            pauseStates
             // depositQueue: (depositQueue && Array.isArray(depositQueue)) ? depositQueue as DepositDto[] : [] 
         }
     }
@@ -137,89 +141,148 @@ export class Handler {
             logger.warn('Failed to save login attempts: ', err);
         });
     }
+    onPauseBot(pause: boolean, reason: string | null, pauseEnd: number) {
+        const pauseState: PauseState = {
+            paused: pause,
+            reason: reason || undefined,
+            pauseEndTime: pauseEnd,
+            timestamp: Date.now()
+        };
+        this.setPauseState('bot', pauseState);
+    }
+    onPause(type: PauseType, pause: boolean, reason?: string, pauseEndTime?: number) {
+        const pauseState: PauseState = {
+            paused: pause,
+            reason: reason || undefined,
+            pauseEndTime,
+            timestamp: Date.now()
+        };
+        this.setPauseState(type, pauseState);
+    }
 
     // ============================================================================
-    // PAUSE STATE MANAGEMENT
+    // UNIFIED PAUSE STATE MANAGEMENT
     // ============================================================================
 
-    async onPauseStateChange(pauseState: PauseState): Promise<void> {
+    async setPauseState(type: PauseType, pauseState: PauseState): Promise<void> {
         try {
-            await files.writeFile(this.paths.files.pauseState, pauseState, true);
-            logger.info('Pause state saved:', {
-                isPaused: pauseState.isPaused,
-                reason: pauseState.pauseReason,
-                endTime: pauseState.pauseEndTime ? new Date(pauseState.pauseEndTime).toISOString() : null
+            const pauseFilePath = this.paths.files.pauseState;
+            
+            // Load existing pause states
+            let allPauseStates = await this.getAllPauseStates();
+            
+            // Update the specific pause type
+            allPauseStates[type] = pauseState;
+            
+            await files.writeFile(pauseFilePath, allPauseStates, true);
+            logger.info(`${type} pause state updated:`, {
+                paused: pauseState.paused,
+                reason: pauseState.reason,
+                endTime: pauseState.pauseEndTime ? new Date(pauseState.pauseEndTime).toISOString() : 'indefinite'
             });
         } catch (err) {
-            logger.warn('Failed to save pause state: ', err);
+            logger.warn(`Failed to save ${type} pause state: `, err);
         }
     }
 
-    async pauseBot(pauseDuration: number, reason: string): Promise<void> {
-        const pauseState: PauseState = {
-            isPaused: true,
-            pauseEndTime: Date.now() + pauseDuration,
-            pauseReason: reason,
-            pausedAt: Date.now()
-        };
-
-        await this.onPauseStateChange(pauseState);
-        logger.warn(`Bot paused for ${pauseDuration/60000} minutes until ${new Date(pauseState.pauseEndTime!).toISOString()}: ${reason}`);
-    }
-
-    async resumeBot(): Promise<void> {
-        const pauseState: PauseState = {
-            isPaused: false,
-            pauseEndTime: null,
-            pauseReason: null,
-            pausedAt: null
-        };
-
-        await this.onPauseStateChange(pauseState);
-        logger.info('Bot resumed');
-    }
-
-    async getPauseState(): Promise<PauseState> {
+    async getAllPauseStates(): Promise<Pause> {
         try {
-            const pauseState = await files.readFile(this.paths.files.pauseState, true);
-            return pauseState ?? {
-                isPaused: false,
-                pauseEndTime: null,
-                pauseReason: null,
-                pausedAt: null
-            };
+            const pauseFilePath = this.paths.files.pauseState;
+            const pauseStates = await files.readFile(pauseFilePath, true);
+            
+            if (this.isValidPauseStates(pauseStates)) {
+                return pauseStates;
+            }
         } catch (err) {
-            logger.warn('Failed to read pause state, assuming not paused: ', err);
-            return {
-                isPaused: false,
-                pauseEndTime: null,
-                pauseReason: null,
-                pausedAt: null
-            };
+            logger.debug('No pause states file found or error reading, returning defaults');
+        }
+        
+        // Return default state
+        return {
+            bot: {
+                paused: false,
+                timestamp: Date.now()
+            }
+        };
+    }
+
+    async getPauseState(type: PauseType): Promise<PauseState> {
+        const allStates = await this.getAllPauseStates();
+        return allStates[type] || {
+            paused: false,
+            timestamp: Date.now()
+        };
+    }
+
+    private isValidPauseStates(states: any): states is Pause {
+        return (
+            typeof states === 'object' &&
+            states !== null &&
+            (typeof states.bot === 'undefined' || this.isValidPauseState(states.bot)) &&
+            (typeof states.trades === 'undefined' || this.isValidPauseState(states.trades)) &&
+            (typeof states.inventory === 'undefined' || this.isValidPauseState(states.inventory))
+        );
+    }
+
+    private isValidPauseState(state: any): state is PauseState {
+        return (
+            typeof state === 'object' &&
+            state !== null &&
+            typeof state.paused === 'boolean' &&
+            typeof state.timestamp === 'number' &&
+            (typeof state.reason === 'undefined' || typeof state.reason === 'string') &&
+            (typeof state.pauseEndTime === 'undefined' || typeof state.pauseEndTime === 'number')
+        );
+    }
+
+    async pauseComponent(type: PauseType, reason?: string, pauseEndTime?: number): Promise<void> {
+        const pauseState: PauseState = {
+            paused: true,
+            reason,
+            pauseEndTime,
+            timestamp: Date.now()
+        };
+
+        await this.setPauseState(type, pauseState);
+        
+        if (pauseEndTime && pauseEndTime > Date.now()) {
+            logger.warn(`${type} paused for ${(pauseEndTime - Date.now()) / 60000} minutes until ${new Date(pauseEndTime).toISOString()}: ${reason}`);
+        } else {
+            logger.warn(`${type} paused indefinitely: ${reason}`);
         }
     }
 
-    async checkAndResolvePauseState(): Promise<boolean> {
-        const pauseState = await this.getPauseState();
+    async resumeComponent(type: PauseType): Promise<void> {
+        const pauseState: PauseState = {
+            paused: false,
+            timestamp: Date.now()
+        };
+
+        await this.setPauseState(type, pauseState);
+        logger.info(`${type} resumed`);
+    }
+
+    async checkAndResolvePauseState(type: PauseType): Promise<boolean> {
+        const pauseState = await this.getPauseState(type);
         
-        if (pauseState.isPaused && pauseState.pauseEndTime) {
+        if (pauseState.paused && pauseState.pauseEndTime) {
             const now = Date.now();
             
             // Check if pause has expired
             if (now >= pauseState.pauseEndTime) {
-                await this.resumeBot();
-                logger.info('Pause expired, bot automatically resumed');
+                await this.resumeComponent(type);
+                logger.info(`${type} pause expired, automatically resumed`);
                 return false; // Not paused anymore
             }
             
             return true; // Still paused
         }
         
-        return pauseState.isPaused;
+        return pauseState.paused;
     }
 
     getPauseTimeRemaining(pauseState: PauseState): number {
-        if (!pauseState.isPaused || !pauseState.pauseEndTime) {
+        if (!pauseState.paused || !pauseState.pauseEndTime) {
             return 0;
         }
         return Math.max(0, pauseState.pauseEndTime - Date.now());
@@ -246,15 +309,15 @@ export class Handler {
     // ============================================================================
 
     async getBotStatus() {
-        const pauseState = await this.getPauseState();
-        const isCurrentlyPaused = await this.checkAndResolvePauseState();
+        const pauseState = await this.getPauseState('bot');
+        const isCurrentlyPaused = await this.checkAndResolvePauseState('bot');
         
         return {
             ready: this.bot.ready,
             paused: isCurrentlyPaused,
-            pauseInfo: pauseState.isPaused ? {
-                reason: pauseState.pauseReason,
-                pausedAt: pauseState.pausedAt ? new Date(pauseState.pausedAt).toISOString() : null,
+            pauseInfo: pauseState.paused ? {
+                reason: pauseState.reason,
+                pausedAt: new Date(pauseState.timestamp).toISOString(),
                 endTime: pauseState.pauseEndTime ? new Date(pauseState.pauseEndTime).toISOString() : null,
                 timeRemaining: this.formatPauseTimeRemaining(pauseState),
                 timeRemainingMs: this.getPauseTimeRemaining(pauseState)
@@ -263,12 +326,42 @@ export class Handler {
         };
     }
 
+    async getComponentStatus(type: PauseType) {
+        const pauseState = await this.getPauseState(type);
+        const isCurrentlyPaused = await this.checkAndResolvePauseState(type);
+        
+        return {
+            type,
+            paused: isCurrentlyPaused,
+            pauseInfo: pauseState.paused ? {
+                reason: pauseState.reason,
+                pausedAt: new Date(pauseState.timestamp).toISOString(),
+                endTime: pauseState.pauseEndTime ? new Date(pauseState.pauseEndTime).toISOString() : null,
+                timeRemaining: this.formatPauseTimeRemaining(pauseState),
+                timeRemainingMs: this.getPauseTimeRemaining(pauseState)
+            } : null
+        };
+    }
+
+    async getAllComponentsStatus() {
+        const allStates = await this.getAllPauseStates();
+        const components: { [K in PauseType]: any } = {} as any;
+        
+        for (const type of ['bot', 'trades', 'inventory'] as PauseType[]) {
+            components[type] = await this.getComponentStatus(type);
+        }
+        
+        return components;
+    }
+
     private startPoller(): void {
         if (this.poller === null) {
             this.poller = setInterval(async () => {
                 try {
-                    // Check if pause has expired and auto-resume if needed
-                    await this.checkAndResolvePauseState();
+                    // Check if pause has expired for each component and auto-resume if needed
+                    await this.checkAndResolvePauseState('bot');
+                    await this.checkAndResolvePauseState('trades');
+                    await this.checkAndResolvePauseState('inventory');
                     
                     // Add other polling logic here
                     // - Check file system health

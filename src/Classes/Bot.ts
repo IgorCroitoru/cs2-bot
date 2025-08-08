@@ -173,7 +173,7 @@ export class Bot extends EventEmitter {
         return super.emit(event, ...args);
     }
     private bindEventHandlers() {
-        
+        this.on("paused", this.handler.onPauseBot.bind(this.handler));
         this.steamClient.on('disconnected',this.onDisconnected.bind(this))
         this.steamClient.on('error', this.onError.bind(this));
         

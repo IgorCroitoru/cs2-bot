@@ -6,6 +6,7 @@ import { delay } from "../utils";
 import * as files from "../lib/files";
 import { extend } from "dayjs";
 import { v4 as uuidv4 } from "uuid";
+import { PauseState, PauseType } from "../Handler/Handler";
 
 export interface TaskQueueEvents {
   taskQueued: [taskId: string, queueSize: number];
@@ -33,11 +34,12 @@ export interface TaskQueueResponse {
   taskId?: string;
 }
 
-export interface TaskItem<T> {
+export interface TaskItem<Data = any> {
   id: string;
   timestamp: number;
   retries: number;
-  data: T;
+  pause?: PauseInfo
+  data: Data;
 }
 
 export interface TaskProcessorConfig {
@@ -46,6 +48,7 @@ export interface TaskProcessorConfig {
   delayBetweenTasks: number;
   defaultPauseDuration?: number;
   queueFilePath?: string;
+  pauseType: PauseType; // Component type for pause state persistence
 }
 
 export interface PauseInfo {
@@ -91,7 +94,8 @@ export abstract class AbstractTaskProcessor<
     protected readonly config: TaskProcessorConfig,
   ) {
     super();
-    // this._config = config;
+    // Load pause state from file on initialization
+    this.loadPauseState();
   }
 
   abstract processTask(task: TaskItem<T>): Promise<void>;
@@ -227,7 +231,7 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     this.jobSet.add(task.id);
   }
 
-  shouldPause(task: TaskItem<T>): {pause: boolean, reason?: string, time?: number} {
+  shouldPauseQueue(task: TaskItem<T>): {pause: boolean, reason?: string, time?: number} {
     return {
       pause: false,
       reason: undefined,
@@ -247,9 +251,10 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
 
     this.processing = true;
 
-    while (this.queue.length > 0 && !this._paused && this.bot.ready) {
-      if (this.shouldPause(this.queue[0]).pause) {
-        const pauseInfo = this.shouldPause(this.queue[0]);
+    while (this.queue.length > 0 && !this._paused && this.bot.ready && !this.bot.isPaused) {
+      const shouldPause = this.shouldPauseQueue(this.queue[0]);
+      if (shouldPause.pause) {
+        const pauseInfo = shouldPause;
         this.pause(pauseInfo.time || this.config.defaultPauseDuration || 0, pauseInfo.reason ?? null);
         return;
       }
@@ -287,6 +292,59 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
    
     return `${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
   }
+
+  // ============================================================================
+  // PAUSE STATE PERSISTENCE
+  // ============================================================================
+
+  private async loadPauseState(): Promise<void> {
+    try {
+      const pauseState = await this.bot.handler.getPauseState(this.config.pauseType);
+      
+      // Restore pause state
+      this._paused = pauseState.paused;
+      this.pauseReason = pauseState.reason || null;
+      this.pauseEndTime = pauseState.pauseEndTime || null;
+      
+      // If paused with end time, set up auto-resume
+      if (this._paused && this.pauseEndTime) {
+        const remainingTime = this.pauseEndTime - Date.now();
+        if (remainingTime > 0) {
+          this.pauseTimeoutId = setTimeout(() => {
+            this.resume();
+          }, remainingTime);
+          logger.info(`${this.config.pauseType} queue restored paused state, resuming in ${Math.round(remainingTime / 1000)}s`);
+        } else {
+          // Pause time has already expired, resume immediately
+          this._paused = false;
+          this.pauseEndTime = null;
+          this.pauseReason = null;
+        }
+      } else if (this._paused) {
+        logger.info(`${this.config.pauseType} queue restored indefinite pause state: ${this.pauseReason}`);
+      }
+    } catch (err) {
+      logger.debug(`No pause state found for ${this.config.pauseType} queue or error loading: ${err}`);
+    }
+  }
+
+  private async savePauseState(): Promise<void> {
+    try {
+      // Create pause state object
+      const pauseState: PauseState = {
+        paused: this._paused,
+        reason: this.pauseReason || undefined,
+        pauseEndTime: this.pauseEndTime || undefined,
+        timestamp: Date.now()
+      };
+      
+      // Use Handler's method to save pause state
+      await this.bot.handler.setPauseState(this.config.pauseType, pauseState);
+      
+    } catch (err) {
+      logger.warn(`Failed to save pause state for ${this.config.pauseType}: ${err}`);
+    }
+  }
  
   public pause(pauseDuration: number, reason: string | null): void {
     if (this.pauseTimeoutId) {
@@ -308,6 +366,11 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
         this.resume();
       }, pauseDuration);
     }
+
+    // Save pause state to file
+    this.savePauseState().catch(err => 
+      logger.warn(`Failed to save pause state: ${err}`)
+    );
   }
 
   public resume(): void {
@@ -324,6 +387,11 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     this.pauseReason = null;
 
     this.emit("pause", false, null);
+
+    // Save resume state to file
+    this.savePauseState().catch(err => 
+      logger.warn(`Failed to save resume state: ${err}`)
+    );
 
     if (!this.processing) {
       this.process();

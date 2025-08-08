@@ -27,10 +27,12 @@ async function startBotManager() {
             const tradeManager = new NewTrades(botManager.bot, {
                 delayBetweenTasks: config.offer.delayBetweenOffers,
                 maxRetries: config.offer.maxRetries,
+                pauseType: "trades"
             })
             const inventory = new NewInventory(botManager.bot, {
                 delayBetweenTasks: config.inventory.delayBetweenReq,
                 maxRetries:config.inventory.maxRetries,
+                pauseType: "inventory"
             })
             const httpManager = new HttpManager(inventory);
             setupSocketClient({
