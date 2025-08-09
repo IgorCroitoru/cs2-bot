@@ -1,11 +1,8 @@
 import { Bot } from "./Bot";
-import { InventoryEvents } from "./Interfaces/Events";
 import EventEmitter from "events";
 import { logger } from "../../logger";
 import { delay } from "../utils";
 import * as files from "../lib/files";
-import { extend } from "dayjs";
-import { v4 as uuidv4 } from "uuid";
 import { PauseState, PauseType } from "../Handler/Handler";
 
 export interface TaskQueueEvents {
@@ -170,7 +167,12 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     }
 
     if (!this.validateTask(taskData)) {
-      throw new Error("Invalid task data");
+      return callback({
+        status: "error",
+        error: {
+          message: "Invalid task data",
+        },
+      });
     }
 
     const taskId = this.createTaskId(taskData);
@@ -337,7 +339,6 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
         pauseEndTime: this.pauseEndTime || undefined,
         timestamp: Date.now()
       };
-      
       // Use Handler's method to save pause state
       await this.bot.handler.setPauseState(this.config.pauseType, pauseState);
       

@@ -150,14 +150,14 @@ export class Handler {
         };
         this.setPauseState('bot', pauseState);
     }
-    onPause(type: PauseType, pause: boolean, reason?: string, pauseEndTime?: number) {
+    async onPause(type: PauseType, pause: boolean, reason?: string, pauseEndTime?: number) {
         const pauseState: PauseState = {
             paused: pause,
             reason: reason || undefined,
             pauseEndTime,
             timestamp: Date.now()
         };
-        this.setPauseState(type, pauseState);
+        await this.setPauseState(type, pauseState);
     }
 
     // ============================================================================

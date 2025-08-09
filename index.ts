@@ -6,16 +6,19 @@ import ON_DEATH from 'death';
 import BotManager from "./src/Classes/BotManager";
 import HttpManager from "./src/Classes/HttpManager";
 import TradesProcessor from "./src/Classes/TradesProcessor";
-import { getSocketClient, setupSocketClient,SocketClient } from "./src/socket";
+import { getSocketClient, setupSocketClient, SocketClient } from "./src/socket";
 import config from "./config";
 import InventoryProcessor from "./src/Classes/InventoryProcessor";
 import { NewInventory } from "./src/Classes/NewInventory";
 import { NewTrades } from "./src/Classes/NewTrades";
 import { OutboxQueue } from "./src/Classes/OutboxQueue";
+import { ServiceContainer } from "./ServiceContainer"; // Add this import
+
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const botManager: BotManager = new BotManager();
-let socketClient:SocketClient
+const services = ServiceContainer.getInstance(); // Get singleton instance
+
 async function startBotManager() {
     try {
         await botManager.start({
@@ -23,50 +26,94 @@ async function startBotManager() {
             password: String(process.env.USER_2_PASSWORD),
             authCode: String(process.env.USER_2_SECRET_KEY)
         });
-        if(botManager.bot){
+
+        if (botManager.bot) {
+            // Store bot in service container
+            services.setBot(botManager.bot);
+
+            // Initialize services
             const tradeManager = new NewTrades(botManager.bot, {
                 delayBetweenTasks: config.offer.delayBetweenOffers,
                 maxRetries: config.offer.maxRetries,
                 pauseType: "trades"
-            })
+            });
+            services.setTradeManager(tradeManager);
+
             const inventory = new NewInventory(botManager.bot, {
                 delayBetweenTasks: config.inventory.delayBetweenReq,
-                maxRetries:config.inventory.maxRetries,
+                maxRetries: config.inventory.maxRetries,
                 pauseType: "inventory"
-            })
-            const httpManager = new HttpManager(inventory);
+            });
+            services.setInventory(inventory);
+
             setupSocketClient({
                 serverUrl: String(process.env.BOT_MANAGER_SOCKET),
                 reconnectAttempts: config.socket.reconnectAttempts,
-                reconnectDelay:config.socket.reconnectDelay
-            },
-            {
-                username:String(process.env.USER_2_LOGIN),
+                reconnectDelay: config.socket.reconnectDelay
+            }, {
+                username: String(process.env.USER_2_LOGIN),
                 id64: String(process.env.USER_2_ID64),
                 ready: botManager.isBotReady
-            })
-            socketClient=getSocketClient()
+            });
+            
+            const socketClient = getSocketClient();
+            services.setSocketClient(socketClient);
+
             const outboxQueue = new OutboxQueue({
                 filePath: botManager.bot.handler.getPaths.files.outboxEvents,
                 maxRetries: 5,
                 retryDelayMs: 1000,
                 maxRetryDelayMs: 30000,
                 enablePersistence: true,
+            });
+            services.setOutboxQueue(outboxQueue);
 
-            })
-            const tradesProcessor:TradesProcessor = new TradesProcessor(tradeManager,socketClient.getSocket(),outboxQueue)
-            const inventProcessor:InventoryProcessor = new InventoryProcessor(inventory,socketClient.getSocket())
+            const tradesProcessor = new TradesProcessor(tradeManager, socketClient.getSocket(), outboxQueue);
+            services.setTradesProcessor(tradesProcessor);
+
+            const inventProcessor = new InventoryProcessor(inventory, socketClient.getSocket());
+            services.setInventoryProcessor(inventProcessor);
+
+            // Now HttpManager can access all services
+            const httpManager = new HttpManager(services); // Pass entire service container
+            services.setHttpManager(httpManager);
+
             await Promise.all([
                 tradesProcessor.start(),
                 inventProcessor.start()
-            ])
+            ]);
+
             httpManager.start();
+
+            logger.info('All services initialized and started successfully');
         }
-        
     } catch (err) {
-        throw err
+        throw err;
     }
 }
+
+// Update shutdown handler
+ON_DEATH({ uncaughtException: true })((signalOrErr, origin?: string | Error) => {
+    const crashed = !['SIGINT', 'SIGTERM'].includes(signalOrErr as 'SIGINT' | 'SIGTERM' | 'SIGQUIT');
+
+    const error = origin instanceof Error ? origin : signalOrErr instanceof Error ? signalOrErr : null;
+
+    if (crashed && error) {
+        logger.error('Bot crashed:', {
+            message: error.message,
+            stack: error.stack,
+            origin: origin,
+            signal: signalOrErr
+        });
+    } else {
+        logger.warn('Received kill signal:', signalOrErr, origin);
+    }
+
+    // Graceful shutdown
+    services.shutdown().then(() => {
+        process.exit(crashed ? 1 : 0);
+    });
+});
 
 async function main() {
     try{
@@ -82,29 +129,6 @@ async function main() {
     }
    
 }
-
-ON_DEATH({ uncaughtException: true })((signalOrErr, origin?: string | Error) => {
-    const crashed = !['SIGINT', 'SIGTERM'].includes(signalOrErr as 'SIGINT' | 'SIGTERM' | 'SIGQUIT');
-
-    const error = origin instanceof Error ? origin : signalOrErr instanceof Error ? signalOrErr : null;
-
-    if (crashed && error) {
-        logger.error('Bot crashed:', {
-            message: error.message,
-            stack: error.stack, // This contains the line numbers and call stack
-            origin: origin,
-            signal: signalOrErr
-        });
-
-        
-
-    } else {
-        logger.warn('Received kill signal:', signalOrErr, origin);
-        process.exit(1)
-    }
-
-    //botManager.stop(crashed ? error : null);
-});
 
 main().catch((err) => {
     logger.error(`An error occurred: ${(err as Error).message}`);

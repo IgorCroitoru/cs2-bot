@@ -353,9 +353,9 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
         } else {
           this.emit("offerCreation", null, dealSt, offer);
           offer.data("partnerId", task.data.userId64);
-          offer.data("dealId", task.id);
+          offer.data("dealId", dealSt.id);
           logger.info(
-            `Successfully processed deal ${task.id}, offer #${offer.id} created`
+            `Successfully processed deal ${dealSt.id}, offer #${offer.id} created`
           );
           resolve();
         }

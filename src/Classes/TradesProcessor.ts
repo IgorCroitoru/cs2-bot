@@ -94,6 +94,7 @@ export default class TradesProcessor {
     //SOCKETS EVENTS BINDING
     this.socket.on("connect", async () => {
       this.outbox.resume();
+      this.outbox.retryAllTimedOutEvents();
       logger.info("Socket connected")
       logger.debug("Outbox resumed due to socket connect");
       
@@ -103,6 +104,7 @@ export default class TradesProcessor {
       this.outbox.pause();
       logger.info("Outbox paused due to socket disconnect");
     })
+    
     this.socket.on("pauseTrade", (paused, cause, pauseEnd) => {
       logger.info(`Pausing trades processor: ${paused} - ${cause}`);
       if (paused) {
@@ -168,7 +170,11 @@ export default class TradesProcessor {
         offer.data("trade_offer_created_at", created_at);
         offer.data("trade_offer_expiry_at", expiry_at);
         try {
-          const data: OfferCreationPayload = {
+          const data: OfferCreationPayload<OfferMetadata> = {
+            metadata:{
+              dealId: deal.id
+            },
+            offerId: offer.id,
             error: error,
             state: offer.state,
             trade_offer_created_at: created_at,

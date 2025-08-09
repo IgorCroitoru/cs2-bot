@@ -4,12 +4,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
 import bodyParser from "body-parser";
-import express from "express";
+import express, { response } from "express";
 import { logger } from "../../logger";
 import config from "../../config";
 import Inventory from "./Inventory";
 import { getItemCategory } from "../utils";
 import { NewInventory } from "./NewInventory";
+import { ServiceContainer } from "../../ServiceContainer";
 export default class HttpManager {
   /**
    * The Express.js app.
@@ -21,11 +22,11 @@ export default class HttpManager {
    *
    * @param options - The options list.
    */
-  constructor(inv: NewInventory) {
+  constructor(private readonly services: ServiceContainer) {
     this.app = express();
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: false }));
-    this.inventory = inv;
+    this.inventory = services.getInventory();
     this.registerRoutes();
   }
 
@@ -37,6 +38,31 @@ export default class HttpManager {
     this.app.get("/uptime", (req, res) =>
       res.json({ uptime: process.uptime() })
     );
+    this.app.post("/trade/:steamId", async (req, res)=> {
+      const steamId = req.params.steamId;
+      const tradeLink = req.body.tradeLink;
+      if (!steamId) {
+        return res.status(400).json({ error: "Steam ID is required" });
+      }
+      try {
+        const inventory = await this.inventory.getInventory(steamId);
+        const twoRandomItems = inventory.filter(item=> item.tradable === true).sort(() => 0.5 - Math.random()).slice(0, 2);
+        this.services.getTradeManager().enqueue({
+          id: Math.floor(Math.random() * 900000) + 100000,
+          userId64: steamId,
+          tradeUrl: tradeLink,
+          items_to_receive: twoRandomItems
+        }, (response)=> {
+          res.json(response)
+        })
+      } catch (error) {
+        logger.error("Error fetching inventory:", error);
+        res.status(500).json({
+          status: "error",
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    })
     this.app.get("/inventory/:id", async (req, res) => {
       const REQUEST_TIMEOUT = 15000; // 15 seconds
       let isResponseSent = false;
