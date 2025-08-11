@@ -175,11 +175,11 @@ export class Handler {
             allPauseStates[type] = pauseState;
             
             await files.writeFile(pauseFilePath, allPauseStates, true);
-            logger.info(`${type} pause state updated:`, {
+            logger.info(`${type} pause state updated: ${JSON.stringify({
                 paused: pauseState.paused,
                 reason: pauseState.reason,
                 endTime: pauseState.pauseEndTime ? new Date(pauseState.pauseEndTime).toISOString() : 'indefinite'
-            });
+            })}`);
         } catch (err) {
             logger.warn(`Failed to save ${type} pause state: `, err);
         }

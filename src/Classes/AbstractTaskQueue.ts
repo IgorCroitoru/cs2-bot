@@ -78,8 +78,8 @@ export abstract class AbstractTaskProcessor<
   EventMap extends Record<string | symbol, any[]>
 > extends EventEmitter {
   protected queue: (TaskItem<T>)[] = [];
-  protected processing = false;
-  protected _paused: boolean = false;
+  private processing = false;
+  private _paused: boolean = false;
   protected pauseEndTime: number | null = null;
   protected pauseTimeoutId: NodeJS.Timeout | null = null;
   protected pauseReason: string | null = null;
@@ -135,7 +135,7 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     return super.off(event as string, listener);
 }
 
- 
+
   // Common queue management
   public async enqueue(
     taskData: T,
@@ -157,14 +157,14 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
         },
       });
     }
-    if (this._paused) {
-      return callback({
-        status: "service_paused",
-        error: {
-          message: `Service is paused: ${this.pauseReason}`,
-        },
-      });
-    }
+    // if (this._paused) {
+    //   return callback({
+    //     status: "service_paused",
+    //     error: {
+    //       message: `Service is paused: ${this.pauseReason}`,
+    //     },
+    //   });
+    // }
 
     if (!this.validateTask(taskData)) {
       return callback({
@@ -195,13 +195,20 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     // ) {
     //   throw new Error("Queue is full");
     // }
-
     this.queue.push(task);
     this.jobSet.add(taskId);
-
+ 
     // Save queue state if file path is provided
     if (this.config.queueFilePath) {
       await this.saveQueueState();
+    }
+    const canResume = this.canResumeQueue(task);
+    if(canResume){
+      logger.info(`Resuming queue processing for task ${task.id}`);
+      this.resume();
+    }
+    else{
+      logger.info(`Queue cannot be resumed`);
     }
     this.emit("taskQueued", taskId, this.queue.length);
     callback({
@@ -211,7 +218,7 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
       estimated_wait: this.estimateWaitTime(),
       taskId: task.id,
     });
-    if (!this.processing && this.bot.ready && !this._paused) {
+    if (!this.processing && this.bot.ready && !this._paused && !this.bot.isPaused) {
       this.process();
     }
   }
@@ -224,16 +231,25 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     return false; // Default implementation, can be overridden
   }
 
-  private requeueTask(task: TaskItem<T>):void{
+  private async requeueTask(task: TaskItem<T>):Promise<void>{
      if (this.queue.length === 0) {
       this.queue.push(task); // No other tasks, push at end
     } else {
       this.queue.splice(1, 0, task); // Insert at index 1
     }
     this.jobSet.add(task.id);
+    if(this.config.queueFilePath){
+      await this.saveQueueState();
+    }
   }
 
-  shouldPauseQueue(task: TaskItem<T>): {pause: boolean, reason?: string, time?: number} {
+  canResumeQueue(task: TaskItem<T>): boolean {
+    if (!this.isPaused()) return true;
+    // Implement your logic to determine if the queue can be resumed
+    return false;
+  }
+
+  shouldPauseQueue(): {pause: boolean, reason?: string, time?: number} {
     return {
       pause: false,
       reason: undefined,
@@ -246,7 +262,8 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
       this.processing ||
       this.queue.length === 0 ||
       this._paused ||
-      !this.bot.ready
+      !this.bot.ready ||
+      this.bot.isPaused
     ) {
       return;
     }
@@ -254,12 +271,7 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     this.processing = true;
 
     while (this.queue.length > 0 && !this._paused && this.bot.ready && !this.bot.isPaused) {
-      const shouldPause = this.shouldPauseQueue(this.queue[0]);
-      if (shouldPause.pause) {
-        const pauseInfo = shouldPause;
-        this.pause(pauseInfo.time || this.config.defaultPauseDuration || 0, pauseInfo.reason ?? null);
-        return;
-      }
+      
       const task = this.queue.shift()!;
       this.jobSet.delete(task.id);
 
@@ -270,13 +282,14 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
       try {
         const shouldSkip = this.requeueCondition(task);
         if (shouldSkip) {
-          this.requeueTask(task);
+          logger.info(`Requeuing task ${task.id} due to requeue condition`);
+          await this.requeueTask(task);
           continue; 
         }
         await this.processTask(task);
         this.emit("taskCompleted", task.id);
       } catch (err) {
-        logger.error(`Error processing task ${task.id}:`, err);
+        logger.debug(`Error processing task ${task.id}:`, err);
         await this.handleTaskError(task, err);
         this.emit("taskFailed", task.id, err);
       }
@@ -284,6 +297,12 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
       // Rate limiting delay
       if (this.queue.length > 0) {
         await delay(this.config.delayBetweenTasks);
+      }
+      const shouldPause = this.shouldPauseQueue();
+      if (shouldPause.pause) {
+        const pauseInfo = shouldPause;
+        this.pause(pauseInfo.time || this.config.defaultPauseDuration || 0, pauseInfo.reason ?? null);
+        return;
       }
     }
 

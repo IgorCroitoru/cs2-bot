@@ -148,3 +148,20 @@ export function getItemCategory(item: CEconItem): EFullCategory | null {
     }
   }
   
+// Add this helper function
+export function hydrateCEconItem(itemData: any): CEconItem {
+    if (itemData instanceof CEconItem) {
+        return itemData; // Already hydrated
+    }
+    // Create new CEconItem from plain object
+    const item = new CEconItem(itemData, itemData.description, itemData.contextid);
+    
+    
+    
+    return item;
+}
+
+export function hydrateItemArray(items: any[] | any): CEconItem[] {
+    if (!Array.isArray(items)) return [hydrateCEconItem(items)];
+    return items.map(item => hydrateCEconItem(item));
+}

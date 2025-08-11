@@ -35,7 +35,8 @@ async function startBotManager() {
             const tradeManager = new NewTrades(botManager.bot, {
                 delayBetweenTasks: config.offer.delayBetweenOffers,
                 maxRetries: config.offer.maxRetries,
-                pauseType: "trades"
+                pauseType: "trades",
+                queueFilePath: botManager.bot.handler.getPaths.files.dealQueue
             });
             services.setTradeManager(tradeManager);
 

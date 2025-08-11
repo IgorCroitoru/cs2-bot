@@ -71,13 +71,13 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
       );
       this.checkAndResumeFromOfferLimit();
     });
-    
+
     this.bot.tradeManager.on("realTimeTradeConfirmationRequired", (offer) => {
       logger.info(
         `Offer #${offer.id} requires confirmation, pausing trade processing...`
       );
     });
-    
+
     this.bot.tradeManager.on("sentOfferChanged", (offer, oldState) => {
       if (this.isOfferFinished(offer.state)) {
         // An offer reached final state, check if we should resume
@@ -85,6 +85,7 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
           `Offer #${offer.id} reached final state (${offer.state}), checking if trades can resume...`
         );
         this.checkAndResumeFromOfferLimit();
+        // this.canResumeQueue();
       }
     });
 
@@ -98,7 +99,7 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
       }
     });
   }
-  public override shouldPauseQueue(task: TaskItem<DealDto>): {
+  public override shouldPauseQueue(): {
     pause: boolean;
     reason?: string;
     time?: number;
@@ -111,50 +112,57 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
       Object.keys(activeOffers.sent).length +
       Object.keys(activeOffers.received).length;
 
-    // Check if we've exceeded the total offer limit
+    // Pause if total active offers hit the global limit
     if (totalActiveCount >= this._pauseConfig.totalTradeLimit) {
       return {
         pause: true,
         reason: EPauseReason.OFFER_LIMIT_EXCEEDED,
-        time: 0, // Indefinite pause until offers complete
+        time: 0, // Indefinite until offers complete
       };
     }
 
-    // Count offers per user to check if all users have reached their limit
+    // Build active offers per user
     const usersOffersCount = new Map<string, number>();
-    let hasAnyUserWithSpace = false;
 
-    // Count sent offers
     Object.values(activeOffers.sent).forEach((offer) => {
       const userId = offer.partnerId;
-      if (userId) {
+      if (userId)
         usersOffersCount.set(userId, (usersOffersCount.get(userId) || 0) + 1);
-      }
     });
 
-    // Count received offers
     Object.values(activeOffers.received).forEach((offer) => {
       const userId = offer.partnerId;
-      if (userId) {
+      if (userId)
         usersOffersCount.set(userId, (usersOffersCount.get(userId) || 0) + 1);
-      }
     });
 
-    // Check if any user has space for more offers
-    for (const [userId, count] of usersOffersCount.entries()) {
-      if (count < this._pauseConfig.userTradeLimit) {
-        hasAnyUserWithSpace = true;
-        break;
+    // Consider only users that are actually in the queue
+    const queueUsers = new Set<string>();
+    for (const task of this.queue) {
+      if (task.data?.userId64) {
+        queueUsers.add(task.data.userId64);
       }
     }
 
-    // If all users who have active offers have reached their limit, pause
-    if (usersOffersCount.size > 0 && !hasAnyUserWithSpace) {
-      return { 
-        pause: true, 
-        reason: EPauseReason.USER_LIMIT_EXCEEDED, 
-        time: 0 // Indefinite pause until offers complete
-      };
+    if (queueUsers.size > 0) {
+      // Is there at least one queued user that still has slot(s)?
+      let hasQueuedUserWithSpace = false;
+      for (const userId of queueUsers) {
+        const count = usersOffersCount.get(userId) || 0;
+        if (count < this._pauseConfig.userTradeLimit) {
+          hasQueuedUserWithSpace = true;
+          break;
+        }
+      }
+
+      // If none of the queued users can currently receive an offer, pause
+      if (!hasQueuedUserWithSpace) {
+        return {
+          pause: true,
+          reason: EPauseReason.USER_LIMIT_EXCEEDED,
+          time: 0, // Indefinite until a user's active offers drop below the limit
+        };
+      }
     }
 
     return { pause: false };
@@ -175,7 +183,7 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
   private async checkAndResumeFromOfferLimit(): Promise<void> {
     try {
       // Only check if we're actually paused
-      if (!this._paused || !this.pauseReason) {
+      if (!this.isPaused() || !this.pauseReason) {
         return;
       }
 
@@ -187,7 +195,9 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
         Object.keys(activeOffers.received).length;
       const limit = this._pauseConfig.totalTradeLimit;
 
-      logger.debug(`Checking resume conditions: ${activeCount}/${limit} active offers, pause reason: ${this.pauseReason}`);
+      logger.debug(
+        `Checking resume conditions: ${activeCount}/${limit} active offers, pause reason: ${this.pauseReason}`
+      );
 
       // Check if we can resume based on pause reason
       if (this.pauseReason === EPauseReason.OFFER_LIMIT_EXCEEDED) {
@@ -270,7 +280,6 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
       });
     });
   }
-
 
   // Load pause configuration from file
   // async loadPauseConfig(): Promise<void> {
@@ -443,7 +452,9 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
       switch (error.eresult) {
         case ERR.TotalOfferLimitExceeded:
           // Total limit exceeded - pause queue
-          logger.warn(`Total offer limit exceeded for deal ${task.data.id}, pausing queue`);
+          logger.warn(
+            `Total offer limit exceeded for deal ${task.data.id}, pausing queue`
+          );
           this.pause(0, EPauseReason.OFFER_LIMIT_EXCEEDED);
           this.queue.unshift(task); // Add back to front
           this.jobSet.add(task.id);
@@ -452,15 +463,22 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
         case ERR.UserOfferLimitExceeded:
           // This is unexpected result because we check user limit before sending
           // User limit exceeded - requeue task (will be skipped until user has space)
-          logger.warn(`User offer limit unexpectedly exceeded for deal ${task.data.id}, requeueing task`);
+          logger.warn(
+            `User offer limit unexpectedly exceeded for deal ${task.data.id}, requeueing task`
+          );
           this.queue.unshift(task);
           this.jobSet.add(task.id);
           return;
 
         case ERR.RateLimitExceeded:
           // Rate limit - pause with exponential backoff
-          const pauseDuration = Math.min(30000 * Math.pow(2, task.retries), 300000);
-          logger.warn(`Rate limit exceeded for deal ${task.data.id}, pausing for ${pauseDuration}ms`);
+          const pauseDuration = Math.min(
+            30000 * Math.pow(2, task.retries),
+            300000
+          );
+          logger.warn(
+            `Rate limit exceeded for deal ${task.data.id}, pausing for ${pauseDuration}ms`
+          );
           this.pause(pauseDuration, EPauseReason.RATE_LIMIT_EXCEEDED);
           this.queue.unshift(task);
           this.jobSet.add(task.id);
@@ -474,7 +492,7 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
     setTimeout(() => {
       this.queue.unshift(task); // Add back to front
       this.jobSet.add(task.id);
-      if (!this.processing && !this._paused) {
+      if (!this.isProcessing() && !this.isPaused()) {
         this.process();
       }
     }, retryDelay);
@@ -506,17 +524,15 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
 
   // Manually check if we should resume from offer limit (useful for debugging)
   public async forceCheckOfferLimit(): Promise<boolean> {
-    if (this._paused && this.pauseReason) {
+    if (this.isPaused() && this.pauseReason) {
       await this.checkAndResumeFromOfferLimit();
-      return !this._paused; // Return true if we resumed
+      return !this.isPaused(); // Return true if we resumed
     }
     return false; // Not paused
   }
 
   // Enhanced method to check if tasks can be resumed
-  public canResumeProcessing(): boolean {
-    if (!this._paused) return true;
-    
+  public override canResumeQueue(task?: TaskItem<DealDto>): boolean {
     const activeOffers = this.getActiveOffers(
       this.bot.tradeManager.pollData as PollData
     );
@@ -527,25 +543,51 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
     switch (this.pauseReason) {
       case EPauseReason.OFFER_LIMIT_EXCEEDED:
         return activeCount < this._pauseConfig.totalTradeLimit;
-      
+
       case EPauseReason.USER_LIMIT_EXCEEDED:
         // Check if any user has space
         const usersOffersCount = new Map<string, number>();
-        [...Object.values(activeOffers.sent), ...Object.values(activeOffers.received)]
-          .forEach((offer) => {
-            const userId = offer.partnerId;
-            if (userId) {
-              usersOffersCount.set(userId, (usersOffersCount.get(userId) || 0) + 1);
+        [
+          ...Object.values(activeOffers.sent),
+          ...Object.values(activeOffers.received),
+        ].forEach((offer) => {
+          const userId = offer.partnerId;
+          if (userId) {
+            usersOffersCount.set(
+              userId,
+              (usersOffersCount.get(userId) || 0) + 1
+            );
+          }
+        });
+        if (task) {
+          //check if user is in the map and if has space for an offer
+          if (usersOffersCount.has(task.data.userId64)) {
+            if (
+              usersOffersCount.get(task.data.userId64)! <
+                this._pauseConfig.userTradeLimit &&
+              Array.from(usersOffersCount.values()).reduce(
+                (acc, n) => acc + n,
+                0
+              ) +
+                1 <
+                this._pauseConfig.totalTradeLimit
+            ) {
+              return true;
             }
-          });
-        
-        for (const [userId, count] of usersOffersCount.entries()) {
-          if (count < this._pauseConfig.userTradeLimit) {
-            return true;
+          } else {
+            //check if user has space
+            if (
+              Array.from(usersOffersCount.values()).reduce(
+                (acc, n) => acc + n,
+                0
+              ) +
+                1 <
+              this._pauseConfig.totalTradeLimit
+            ) {
+              return true;
+            }
           }
         }
-        return false;
-      
       default:
         return false;
     }
@@ -730,6 +772,7 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
           return callback(new CustomError("User trade banned", ERR.TradeBan));
         }
         if (err.cause === "OfferLimitExceeded") {
+          console.log(err);
           // Check current offer counts to determine the type of limit exceeded
           const offers = this.getActiveOffers(
             this.bot.tradeManager.pollData as PollData
@@ -737,13 +780,13 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
           const activeCount =
             Object.keys(offers.sent).length +
             Object.keys(offers.received).length;
-          
+
           // Count offers for this specific user
-          const userOffers = [
+          const arrayOffers = [
             ...Object.values(offers.sent),
             ...Object.values(offers.received),
           ];
-          
+
           // Try to get partner ID from offer if available
           let partnerId: string | undefined;
           try {
@@ -751,9 +794,13 @@ export class NewTrades extends AbstractTaskProcessor<DealDto, TradeEvents> {
           } catch (e) {
             // Fallback if partner info not available
           }
-          
-          const userCount = partnerId 
-            ? userOffers.filter(o => o.partnerId === partnerId).length
+          console.log(arrayOffers);
+          console.log(typeof arrayOffers[0].partnerId);
+          console.log(partnerId);
+          console.log(arrayOffers.filter((o) => o.partnerId === partnerId));
+
+          const userCount = partnerId
+            ? arrayOffers.filter((o) => o.partnerId === partnerId).length
             : 0;
 
           if (activeCount >= this._pauseConfig.totalTradeLimit) {

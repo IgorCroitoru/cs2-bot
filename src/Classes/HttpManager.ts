@@ -176,6 +176,15 @@ export default class HttpManager {
         res.status(500).json({ error: error });
       }
     });
+    this.app.get("/trades/status", async (req,res)=> {
+      try {
+        const status = await this.services.getTradeManager().getDetailedStatus();
+        res.json(status);
+      } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: error });
+      }
+    })
   }
 
   /**

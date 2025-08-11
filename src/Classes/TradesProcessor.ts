@@ -10,7 +10,7 @@ import { logger } from "../../logger";
 import {  PollData } from "./Interfaces/PollData";
 // import { mainServerAck } from "./Interfaces/PollData";
 import { CustomError } from "./CustomError";
-import { delay, ensureArray } from "../utils";
+import { delay, ensureArray, hydrateItemArray } from "../utils";
 import config from "../../config";
 import TradeOffer from "steam-tradeoffer-manager/lib/classes/TradeOffer";
 import { ExtendedMEconItemExchange } from "./Interfaces/ExtendedItem";
@@ -116,8 +116,8 @@ export default class TradesProcessor {
     });
     this.socket.on("newDeal", async (deal, callback) => {
       try {
-       deal.items_to_give = deal.items_to_give ? ensureArray(deal.items_to_give) : [];
-       deal.items_to_receive = deal.items_to_receive ? ensureArray(deal.items_to_receive) : [];
+       deal.items_to_give = deal.items_to_give ? hydrateItemArray(deal.items_to_give) : [];
+       deal.items_to_receive = deal.items_to_receive ? hydrateItemArray(deal.items_to_receive) : [];
        const result = await new Promise<TaskQueueResponse>((resolve) => {
         this.trades.enqueue(deal, (response) => {
           resolve(response);
@@ -186,7 +186,7 @@ export default class TradesProcessor {
         }
       } else if (error) {
         logger.error(
-          `Error while creating offer for deal ${deal.id}: ${error.message}`
+          `Error while creating offer for deal ${deal.id}: ${error.message}`, error
         );
         try {
           //emitting error
@@ -231,7 +231,7 @@ export default class TradesProcessor {
           
 
           let payload: OfferChangeStatePayload<OfferMetadata> = {
-            metadata:{ dealId: offerData.dealId },
+            metadata:{ dealId: offerData?.dealId },
             state: offer.state,
             offerId: offer.id,
             trade_offer_finished_at: this.trades.isOfferFinished(offer.state)

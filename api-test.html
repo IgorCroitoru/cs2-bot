@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS Bot API Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .api-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 2px solid #e9ecef;
+        }
+
+        .section-title {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .control-group label {
+            min-width: 120px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .control-group input, .control-group select {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(86, 171, 47, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .response-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .response-container pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .inventory-display {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .inventory-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            transition: all 0.2s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .inventory-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+
+        .inventory-item.selected {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .inventory-item.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .inventory-item img {
+            width: 100%;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .item-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .item-details {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .logs {
+            background: #343a40;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-entry.log-info {
+            color: #17a2b8;
+        }
+
+        .log-entry.log-success {
+            color: #28a745;
+        }
+
+        .log-entry.log-error {
+            color: #dc3545;
+        }
+
+        .log-entry.log-warn {
+            color: #ffc107;
+        }
+
+        .timestamp {
+            color: #6c757d;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 CS Bot API Tester</h1>
+        
+        <!-- Server Configuration -->
+        <div class="api-section">
+            <h2 class="section-title">Server Configuration</h2>
+            <div class="control-group">
+                <label for="serverUrl">Server URL:</label>
+                <input type="url" id="serverUrl" value="http://localhost:3000" placeholder="http://localhost:3000">
+                <button id="testConnectionBtn" class="btn-primary">Test Connection</button>
+            </div>
+            <div id="connectionResponse" class="response-container" style="display: none;"></div>
+        </div>
+
+        <!-- API Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <span class="stat-number" id="totalRequests">0</span>
+                <span class="stat-label">Total Requests</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="successfulRequests">0</span>
+                <span class="stat-label">Successful</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="failedRequests">0</span>
+                <span class="stat-label">Failed</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="inventoryItems">0</span>
+                <span class="stat-label">Inventory Items</span>
+            </div>
+        </div>
+
+        <!-- Inventory API -->
+        <div class="api-section">
+            <h2 class="section-title">Inventory API</h2>
+            <div class="control-group">
+                <label for="steamId">Steam ID:</label>
+                <input type="text" id="steamId" value="76561198000000000" placeholder="Enter Steam ID64">
+                <button id="fetchInventoryBtn" class="btn-primary">
+                    <span class="loading-spinner" id="inventorySpinner" style="display: none;"></span>
+                    Fetch Inventory
+                </button>
+            </div>
+            <div id="inventoryResponse" class="response-container" style="display: none;"></div>
+            <div id="inventoryDisplay" class="inventory-display" style="display: none;">
+                <h3>Inventory Items:</h3>
+                <div id="inventoryGrid" class="inventory-grid"></div>
+            </div>
+        </div>
+
+        <!-- Trade Creation API -->
+        <div class="api-section">
+            <h2 class="section-title">Trade Creation API</h2>
+            <div class="control-group">
+                <label for="tradeUserId">User Steam ID:</label>
+                <input type="text" id="tradeUserId" value="76561198123456789" placeholder="Enter target user Steam ID64">
+                <label for="tradeUrl">Trade URL (optional):</label>
+                <input type="text" id="tradeUrl" value="" placeholder="Steam trade URL (optional)">
+            </div>
+            <div class="control-group">
+                <button id="selectAllBtn" class="btn-success">Select All</button>
+                <button id="clearSelectionBtn" class="btn-danger">Clear Selection</button>
+                <button id="createTradeBtn" class="btn-primary">
+                    <span class="loading-spinner" id="tradeSpinner" style="display: none;"></span>
+                    Create Trade with Selected Items
+                </button>
+            </div>
+            <div id="selectedItemsInfo" style="margin-top: 10px; padding: 10px; background: #e8f5e8; border-radius: 5px; display: none;">
+                <strong>Selected Items: <span id="selectedCount">0</span></strong>
+                <div id="selectedItemsList" style="font-size: 12px; margin-top: 5px;"></div>
+            </div>
+            <div id="tradeResponse" class="response-container" style="display: none;"></div>
+        </div>
+
+        <!-- Server Status API -->
+        <div class="api-section">
+            <h2 class="section-title">Server Status API</h2>
+            <div class="control-group">
+                <button id="getStatusBtn" class="btn-success">Get Server Status</button>
+                <button id="getBotsBtn" class="btn-success">Get Connected Bots</button>
+            </div>
+            <div id="statusResponse" class="response-container" style="display: none;"></div>
+        </div>
+
+        <!-- Event Simulation API -->
+        <div class="api-section">
+            <h2 class="section-title">Event Simulation API</h2>
+            <div class="control-group">
+                <label for="eventType">Event Type:</label>
+                <select id="eventType">
+                    <option value="inventoryFetched">inventoryFetched</option>
+                    <option value="offerCreation">offerCreation</option>
+                    <option value="offerChangedState">offerChangedState</option>
+                    <option value="tradesPaused">tradesPaused</option>
+                    <option value="botPaused">botPaused</option>
+                </select>
+                <button id="simulateEventBtn" class="btn-danger">Simulate Event</button>
+            </div>
+            <div class="control-group">
+                <label for="eventPayload">Event Payload (JSON):</label>
+                <input type="text" id="eventPayload" value='{"test": "data"}' placeholder='{"key": "value"}'>
+            </div>
+            <div id="simulateResponse" class="response-container" style="display: none;"></div>
+        </div>
+
+        <!-- Logs -->
+        <div class="api-section">
+            <h2 class="section-title">Request Logs</h2>
+            <div class="control-group">
+                <button id="clearLogsBtn" class="btn-danger">Clear Logs</button>
+            </div>
+            <div id="logs" class="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = "https://steamcommunity-a.akamaihd.net/economy/image/";
+        class APITester {
+            constructor() {
+                this.stats = {
+                    total: 0,
+                    successful: 0,
+                    failed: 0,
+                    inventoryItems: 0
+                };
+                
+                this.selectedItems = new Set();
+                this.currentInventory = [];
+                
+                this.initializeEventListeners();
+                this.log('info', 'API Tester initialized');
+            }
+
+            initializeEventListeners() {
+                document.getElementById('testConnectionBtn').addEventListener('click', () => this.testConnection());
+                document.getElementById('fetchInventoryBtn').addEventListener('click', () => this.fetchInventory());
+                document.getElementById('getStatusBtn').addEventListener('click', () => this.getServerStatus());
+                document.getElementById('getBotsBtn').addEventListener('click', () => this.getConnectedBots());
+                document.getElementById('simulateEventBtn').addEventListener('click', () => this.simulateEvent());
+                document.getElementById('clearLogsBtn').addEventListener('click', () => this.clearLogs());
+                
+                // Trade functionality
+                document.getElementById('selectAllBtn').addEventListener('click', () => this.selectAllItems());
+                document.getElementById('clearSelectionBtn').addEventListener('click', () => this.clearSelection());
+                document.getElementById('createTradeBtn').addEventListener('click', () => this.createTrade());
+            }
+
+            getServerUrl() {
+                return document.getElementById('serverUrl').value.trim() || 'http://localhost:3000';
+            }
+
+            async makeRequest(url, options = {}) {
+                this.incrementStat('total');
+                
+                try {
+                    this.log('info', `Making request to: ${url}`);
+                    
+                    const response = await fetch(url, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...options.headers
+                        },
+                        ...options
+                    });
+
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        this.incrementStat('successful');
+                        this.log('success', `Request successful: ${response.status}`);
+                    } else {
+                        this.incrementStat('failed');
+                        this.log('error', `Request failed: ${response.status} - ${response.statusText}`);
+                    }
+
+                    return { response, data };
+                } catch (error) {
+                    this.incrementStat('failed');
+                    this.log('error', `Request error: ${error.message}`);
+                    throw error;
+                }
+            }
+
+            async testConnection() {
+                const serverUrl = this.getServerUrl();
+                const responseContainer = document.getElementById('connectionResponse');
+                
+                try {
+                    responseContainer.style.display = 'block';
+                    responseContainer.innerHTML = '<div class="status loading">Testing connection...</div>';
+
+                    const { response, data } = await this.makeRequest(`${serverUrl}/api/status`);
+                    
+                    responseContainer.innerHTML = `
+                        <div class="status ${response.ok ? 'success' : 'error'}">
+                            ${response.ok ? 'Connected' : 'Failed'}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="status error">Connection Failed</div>
+                        <pre>Error: ${error.message}</pre>
+                    `;
+                }
+            }
+
+            async fetchInventory() {
+                const steamId = document.getElementById('steamId').value.trim();
+                if (!steamId) {
+                    this.log('error', 'Please enter a Steam ID');
+                    return;
+                }
+
+                const serverUrl = this.getServerUrl();
+                const responseContainer = document.getElementById('inventoryResponse');
+                const inventoryDisplay = document.getElementById('inventoryDisplay');
+                const spinner = document.getElementById('inventorySpinner');
+                const button = document.getElementById('fetchInventoryBtn');
+
+                try {
+                    // Show loading state
+                    spinner.style.display = 'inline-block';
+                    button.disabled = true;
+                    responseContainer.style.display = 'block';
+                    responseContainer.innerHTML = '<div class="status loading">Fetching inventory...</div>';
+                    inventoryDisplay.style.display = 'none';
+
+                    const { response, data } = await this.makeRequest(`${serverUrl}/api/inventory/${steamId}`);
+                    
+                    // Display response
+                    responseContainer.innerHTML = `
+                        <div class="status ${response.ok ? 'success' : 'error'}">
+                            ${response.ok ? 'Success' : 'Failed'}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+
+                    // Display inventory items if successful
+                    if (response.ok && data.inventory && Array.isArray(data.inventory)) {
+                        this.currentInventory = data.inventory;
+                        this.displayInventory(data.inventory);
+                        this.stats.inventoryItems = data.inventory.length;
+                        this.updateStats();
+                        this.clearSelection(); // Clear previous selections
+                    }
+
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="status error">Request Failed</div>
+                        <pre>Error: ${error.message}</pre>
+                    `;
+                } finally {
+                    spinner.style.display = 'none';
+                    button.disabled = false;
+                }
+            }
+
+            displayInventory(inventory) {
+                const inventoryDisplay = document.getElementById('inventoryDisplay');
+                const inventoryGrid = document.getElementById('inventoryGrid');
+                
+                inventoryGrid.innerHTML = '';
+                
+                inventory.forEach((item, index) => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'inventory-item';
+                    itemElement.dataset.itemIndex = index;
+                    itemElement.innerHTML = `
+                        <img src="${baseUrl + item.icon_url}" 
+                             alt="${item.name || 'Unknown Item'}" 
+                             onerror="this.src='https://via.placeholder.com/150x100?text=No+Image'">
+                        <div class="item-name">${item.name || 'Unknown Item'}</div>
+                        <div class="item-details">
+                            ${item.type || 'Unknown Type'}<br>
+                            ${item.tradable ? 'Tradable' : 'Not Tradable'}
+                        </div>
+                    `;
+                    
+                    // Add click handler for item selection
+                    itemElement.addEventListener('click', () => this.toggleItemSelection(index, itemElement));
+                    
+                    inventoryGrid.appendChild(itemElement);
+                });
+                
+                inventoryDisplay.style.display = 'block';
+                this.updateSelectedItemsDisplay();
+            }
+
+            async getServerStatus() {
+                const serverUrl = this.getServerUrl();
+                const responseContainer = document.getElementById('statusResponse');
+                
+                try {
+                    responseContainer.style.display = 'block';
+                    responseContainer.innerHTML = '<div class="status loading">Getting server status...</div>';
+
+                    const { response, data } = await this.makeRequest(`${serverUrl}/api/status`);
+                    
+                    responseContainer.innerHTML = `
+                        <div class="status ${response.ok ? 'success' : 'error'}">
+                            ${response.ok ? 'Success' : 'Failed'}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="status error">Request Failed</div>
+                        <pre>Error: ${error.message}</pre>
+                    `;
+                }
+            }
+
+            async getConnectedBots() {
+                const serverUrl = this.getServerUrl();
+                const responseContainer = document.getElementById('statusResponse');
+                
+                try {
+                    responseContainer.style.display = 'block';
+                    responseContainer.innerHTML = '<div class="status loading">Getting connected bots...</div>';
+
+                    const { response, data } = await this.makeRequest(`${serverUrl}/api/bots`);
+                    
+                    responseContainer.innerHTML = `
+                        <div class="status ${response.ok ? 'success' : 'error'}">
+                            ${response.ok ? 'Success' : 'Failed'}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="status error">Request Failed</div>
+                        <pre>Error: ${error.message}</pre>
+                    `;
+                }
+            }
+
+            async simulateEvent() {
+                const serverUrl = this.getServerUrl();
+                const eventType = document.getElementById('eventType').value;
+                const eventPayloadText = document.getElementById('eventPayload').value;
+                const responseContainer = document.getElementById('simulateResponse');
+                
+                try {
+                    let payload;
+                    try {
+                        payload = JSON.parse(eventPayloadText);
+                    } catch (e) {
+                        this.log('error', 'Invalid JSON payload');
+                        return;
+                    }
+
+                    responseContainer.style.display = 'block';
+                    responseContainer.innerHTML = '<div class="status loading">Simulating event...</div>';
+
+                    const { response, data } = await this.makeRequest(`${serverUrl}/api/simulate/${eventType}`, {
+                        method: 'POST',
+                        body: JSON.stringify({ payload })
+                    });
+                    
+                    responseContainer.innerHTML = `
+                        <div class="status ${response.ok ? 'success' : 'error'}">
+                            ${response.ok ? 'Success' : 'Failed'}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="status error">Request Failed</div>
+                        <pre>Error: ${error.message}</pre>
+                    `;
+                }
+            }
+
+            incrementStat(statName) {
+                this.stats[statName]++;
+                this.updateStats();
+            }
+
+            updateStats() {
+                document.getElementById('totalRequests').textContent = this.stats.total;
+                document.getElementById('successfulRequests').textContent = this.stats.successful;
+                document.getElementById('failedRequests').textContent = this.stats.failed;
+                document.getElementById('inventoryItems').textContent = this.stats.inventoryItems;
+            }
+
+            log(type, message) {
+                const logs = document.getElementById('logs');
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+                logs.appendChild(logEntry);
+                logs.scrollTop = logs.scrollHeight;
+            }
+
+            clearLogs() {
+                document.getElementById('logs').innerHTML = '';
+                this.log('info', 'Logs cleared');
+            }
+
+            // Trade functionality methods
+            toggleItemSelection(itemIndex, itemElement) {
+                if (this.selectedItems.has(itemIndex)) {
+                    this.selectedItems.delete(itemIndex);
+                    itemElement.classList.remove('selected');
+                } else {
+                    this.selectedItems.add(itemIndex);
+                    itemElement.classList.add('selected');
+                }
+                this.updateSelectedItemsDisplay();
+            }
+
+            selectAllItems() {
+                const inventoryItems = document.querySelectorAll('.inventory-item');
+                inventoryItems.forEach((item, index) => {
+                    this.selectedItems.add(index);
+                    item.classList.add('selected');
+                });
+                this.updateSelectedItemsDisplay();
+                this.log('info', `Selected all ${inventoryItems.length} items`);
+            }
+
+            clearSelection() {
+                this.selectedItems.clear();
+                const inventoryItems = document.querySelectorAll('.inventory-item');
+                inventoryItems.forEach(item => {
+                    item.classList.remove('selected');
+                });
+                this.updateSelectedItemsDisplay();
+                this.log('info', 'Cleared item selection');
+            }
+
+            updateSelectedItemsDisplay() {
+                const selectedCount = this.selectedItems.size;
+                const selectedCountElement = document.getElementById('selectedCount');
+                const selectedItemsInfo = document.getElementById('selectedItemsInfo');
+                const selectedItemsList = document.getElementById('selectedItemsList');
+                
+                selectedCountElement.textContent = selectedCount;
+                
+                if (selectedCount > 0) {
+                    selectedItemsInfo.style.display = 'block';
+                    
+                    const selectedItemsArray = Array.from(this.selectedItems).map(index => {
+                        const item = this.currentInventory[index];
+                        return item ? item.name || 'Unknown Item' : 'Unknown Item';
+                    });
+                    
+                    selectedItemsList.innerHTML = selectedItemsArray.slice(0, 5).join(', ') + 
+                        (selectedItemsArray.length > 5 ? ` and ${selectedItemsArray.length - 5} more...` : '');
+                } else {
+                    selectedItemsInfo.style.display = 'none';
+                }
+            }
+
+            async createTrade() {
+                const userId64 = document.getElementById('tradeUserId').value.trim();
+                const tradeUrl = document.getElementById('tradeUrl').value.trim();
+                
+                if (!userId64) {
+                    this.log('error', 'Please enter a user Steam ID');
+                    return;
+                }
+
+                if (this.selectedItems.size === 0) {
+                    this.log('error', 'Please select at least one item');
+                    return;
+                }
+
+                const serverUrl = this.getServerUrl();
+                const responseContainer = document.getElementById('tradeResponse');
+                const spinner = document.getElementById('tradeSpinner');
+                const button = document.getElementById('createTradeBtn');
+
+                try {
+                    // Show loading state
+                    spinner.style.display = 'inline-block';
+                    button.disabled = true;
+                    responseContainer.style.display = 'block';
+                    responseContainer.innerHTML = '<div class="status loading">Creating trade...</div>';
+
+                    // Prepare items for trade
+                    const itemsToReceive = Array.from(this.selectedItems).map(index => {
+                        const item = this.currentInventory[index];
+                        return item
+                    });
+
+                    const tradePayload = {
+                        userId64: userId64,
+                        items_to_receive: itemsToReceive,
+                        tradeUrl: tradeUrl || undefined
+                    };
+
+                    this.log('info', `Creating trade with ${itemsToReceive.length} items for user ${userId64}`);
+
+                    const { response, data } = await this.makeRequest(`${serverUrl}/api/trade`, {
+                        method: 'POST',
+                        body: JSON.stringify(tradePayload)
+                    });
+                    
+                    // Display response
+                    responseContainer.innerHTML = `
+                        <div class="status ${response.ok ? 'success' : 'error'}">
+                            ${response.ok ? 'Trade Created' : 'Failed'}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+
+                    if (response.ok) {
+                        this.log('success', `Trade created successfully: ${data.tradeId || 'Unknown ID'}`);
+                        // Optionally clear selection after successful trade
+                        // this.clearSelection();
+                    }
+
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="status error">Trade Failed</div>
+                        <pre>Error: ${error.message}</pre>
+                    `;
+                } finally {
+                    spinner.style.display = 'none';
+                    button.disabled = false;
+                }
+            }
+        }
+
+        // Initialize the API tester
+        const apiTester = new APITester();
+    </script>
+</body>
+</html>

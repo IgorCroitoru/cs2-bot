@@ -66,7 +66,7 @@ export class NewInventory extends AbstractTaskProcessor<InventoryTask, Inventory
         setTimeout(() => {
             this.queue.unshift(task); // Add back to front
             this.jobSet.add(task.id);
-            if (!this.processing) {
+            if (!this.isProcessing()) {
                 this.process();
             }
         }, retryDelay);
