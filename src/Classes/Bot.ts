@@ -181,13 +181,7 @@ export class Bot extends EventEmitter {
         this.steamClient.on('steamGuard', this.onSteamGuard.bind(this));
         this.community.on('sessionExpired', this.onSessionExpired.bind(this));
         // this.tradeManager.on('realTimeTradeCompleted')
-        this.tradeManager.on("pollData", async (data:PollData)=> {
-           
-            this.handler.onPollData(data).catch(err => {
-                logger.warn('Failed to save pollData: ', err);
-            })
-           
-        })
+        this.tradeManager.on("pollData", this.handler.onPollData.bind(this.handler));
         this.steamClient.on('loggedOn', (details) => {
             logger.info(`Logged on as ${this.options.accountName}`);
             this.steamClient.setPersona(SteamUser.EPersonaState.Online)

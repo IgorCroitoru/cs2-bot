@@ -33,6 +33,7 @@ export default class TradesProcessor {
     await this.trades.loadQueueState();
     
     this.trades.bindEvents();
+    this.trades.process();
     
   }
   private setupHandlers() {

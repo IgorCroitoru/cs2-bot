@@ -202,8 +202,8 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     if (this.config.queueFilePath) {
       await this.saveQueueState();
     }
-    const canResume = this.canResumeQueue(task);
-    if(canResume){
+    const canResume = this.canResumeQueue();
+    if(canResume && this.isPaused()){
       logger.info(`Resuming queue processing for task ${task.id}`);
       this.resume();
     }
@@ -243,7 +243,7 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     }
   }
 
-  canResumeQueue(task: TaskItem<T>): boolean {
+  canResumeQueue(): boolean {
     if (!this.isPaused()) return true;
     // Implement your logic to determine if the queue can be resumed
     return false;
@@ -271,7 +271,12 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     this.processing = true;
 
     while (this.queue.length > 0 && !this._paused && this.bot.ready && !this.bot.isPaused) {
-      
+      const shouldPause = this.shouldPauseQueue();
+      if (shouldPause.pause) {
+        const pauseInfo = shouldPause;
+        this.pause(pauseInfo.time || this.config.defaultPauseDuration || 0, pauseInfo.reason ?? null);
+        break;
+      }
       const task = this.queue.shift()!;
       this.jobSet.delete(task.id);
 
@@ -298,12 +303,7 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
       if (this.queue.length > 0) {
         await delay(this.config.delayBetweenTasks);
       }
-      const shouldPause = this.shouldPauseQueue();
-      if (shouldPause.pause) {
-        const pauseInfo = shouldPause;
-        this.pause(pauseInfo.time || this.config.defaultPauseDuration || 0, pauseInfo.reason ?? null);
-        return;
-      }
+      
     }
 
     this.processing = false;

@@ -12,7 +12,7 @@ const logFormat = format.combine(
 
 // Create a Winston logger
 export const logger = winston.createLogger({
-  level: 'info', // Set the log level as needed (info, warn, error, etc.)
+  level: 'debug', // Set the log level as needed (info, warn, error, etc.)
   format: logFormat,
   transports: [
     new transports.Console() ,
