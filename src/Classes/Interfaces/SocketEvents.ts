@@ -16,6 +16,11 @@ export interface InventoryQueueResponse {
 }
 export type InventoryStatus = 'ok' | 'error' | 'queued' | 'retrying' | 'bot_unavailable' | 'service_paused';
 
+export interface OutgoingActiveOffersPollData{
+  offers: {[offerId: string]: {
+    steamId64?: string
+  }};
+}
 // export type StatusType = 'needsConf' | 'pending' | 'assigned' | 'active' | 'accepted' | 'cancelled' | 'declined' | 'failed';
 
 export type InitQuery = {
@@ -114,6 +119,7 @@ export interface BotSocketEventsOutgoing {
   // offlineData: (callback: ResponseCallbackOfflineData) => void;
   "ready": (ready: boolean) => void;
   "botPaused": (paused: boolean, cause: string | null, pauseEnd: number) => void;
+  "activeOffersPollData": (payload: OutgoingActiveOffersPollData, callback?: ResponseCallback) => void;
    [key: string]: (...args:any[]) => void;
 }
 

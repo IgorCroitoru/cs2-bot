@@ -3,6 +3,7 @@ import {
   OfferChangeStatePayload,
   OfferCreationPayload,
   OfferMetadata,
+  OutgoingActiveOffersPollData,
   OutgoingEvents,
   ResponseCallbackData,
 } from "./Interfaces/SocketEvents";
@@ -41,6 +42,13 @@ export default class TradesProcessor {
     
       this.outbox.registerHandlers({
       
+        activeOffersPollData: async(payload)=>{
+          try {
+              this.socket.emit("activeOffersPollData", payload)  
+          } catch (error) {
+            throw error;
+          }
+        },
         offerCreation: async (payload) => {
           try {
             const response = await new Promise<ResponseCallbackData>((resolve, reject) => {
@@ -212,6 +220,18 @@ export default class TradesProcessor {
     });
 
     //TRADE MANAGER EVENTS
+    this.trades.bot.tradeManager.on("pollData", (data: PollData) => {
+     
+      const activeTrades = this.trades.getActiveOffers(data)
+      const entries = [...Object.entries(activeTrades.sent), ...Object.entries(activeTrades.received)]
+      const activeOffersPollData = entries.reduce<OutgoingActiveOffersPollData>((acc, [offerId, offerData]) => {
+        acc.offers[offerId] = {
+          steamId64: offerData.partnerId
+        };
+        return acc;
+      }, { offers: {} });
+      this.socket.emit("activeOffersPollData", activeOffersPollData);
+    });
     this.trades.bot.tradeManager.on("newOffer", (offer) => {
       logger.info(
         `New offer #${offer.id} from ${offer.partner.getSteamID64()}`

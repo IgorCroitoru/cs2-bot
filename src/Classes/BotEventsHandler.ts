@@ -1,10 +1,12 @@
 import { Socket } from "socket.io-client";
 import { Bot } from "./Bot";
 import { BotSocketEventsIngoing, BotSocketEventsOutgoing } from "./Interfaces/SocketEvents";
+import { PollData } from "./Interfaces/PollData";
 
 export class BotEvents{
 
-    constructor(private readonly bot:Bot,readonly socket: Socket<BotSocketEventsIngoing, BotSocketEventsOutgoing>){
+    constructor(private readonly bot:Bot,
+        readonly socket: Socket<BotSocketEventsIngoing, BotSocketEventsOutgoing>){
         this.bindEventHandlers();
 
     }
@@ -21,7 +23,7 @@ export class BotEvents{
                 this.socket.emit('botPaused', paused, cause, pauseEnd);
             }
         });
-
+      
         //incoming events
         this.socket.on("pauseBot", (paused, pauseEnd, cause, callback) => {
             this.bot.pause(paused, pauseEnd, cause);     
