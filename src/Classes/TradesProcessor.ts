@@ -15,13 +15,13 @@ import config from "../../config";
 import TradeOffer from "steam-tradeoffer-manager/lib/classes/TradeOffer";
 import { ExtendedMEconItemExchange } from "./Interfaces/ExtendedItem";
 import TradeOfferManager, { MEconItemExchange } from "steam-tradeoffer-manager";
-import { NewTrades } from "./NewTrades";
+import { Trades } from "./Trades";
 import { Socket } from "socket.io-client";
 import { OutboxQueue } from "./OutboxQueue";
 import { TaskQueueResponse } from "./AbstractTaskQueue";
 export default class TradesProcessor {
   constructor(
-    private readonly trades: NewTrades,
+    private readonly trades: Trades,
     private readonly socket: Socket<IngoingEvents,OutgoingEvents>,
     private readonly outbox: OutboxQueue
   ) {}
@@ -181,7 +181,7 @@ export default class TradesProcessor {
             trade_offer_created_at: created_at,
             trade_offer_expiry_at: expiry_at,
           };
-          this.outbox.addEvent("offerCreation", data)
+          this.outbox.addEvent("offerCreation", data, undefined, undefined, undefined, offer.id)
         } catch (e) {
           logger.error(`Unexpected error while emitting offer creation event for deal ${deal.id}:`, e);
         }
@@ -256,7 +256,7 @@ export default class TradesProcessor {
               payload.sent = value.sent;
             }
           }
-          this.outbox.addEvent("offerChangedState", payload)
+          this.outbox.addEvent("offerChangedState", payload, undefined, undefined, undefined, offer.id)
          
         }
       }

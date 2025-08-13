@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
 import { logger } from "../../logger";
 import * as files from "../lib/files";
-import { OutboxEvent, OutboxConfig } from "./Interfaces/OutboxEvents";
+import { OutboxEvent, OutboxConfig, OutboxEventStatus } from "./Interfaces/OutboxEvents";
 import { OutgoingEvents } from "./Interfaces/SocketEvents";
 
 export type Last<T extends any[]> = T extends [...infer H, infer L] ? L : any;
@@ -56,6 +56,14 @@ export class OutboxQueue extends EventEmitter {
     this.loadEvents();
   }
 
+  private getNextSequenceNumber(groupId: string): number {
+    const groupEvents = this.events.filter(
+      (e) => e.group?.id === groupId && e.status !== "completed"
+    );
+    return groupEvents.length > 0
+      ? Math.max(...groupEvents.map((e) => e.group?.sequence || 0)) + 1
+      : 1;
+  }
   /**
    * Add an event to the outbox queue
    */
@@ -64,7 +72,8 @@ export class OutboxQueue extends EventEmitter {
     payload: ExtractPayloadExceptCallback<OutgoingEvents, K>,
     priority: number = 0,
     maxRetries?: number,
-    timeoutMs?: number
+    timeoutMs?: number,
+    groupId?: string
   ): Promise<string> {
     const event: OutboxEvent<ExtractPayloadExceptCallback<OutgoingEvents, K>> =
       {
@@ -77,7 +86,9 @@ export class OutboxQueue extends EventEmitter {
         maxRetries: maxRetries ?? this.config.maxRetries,
         status: "pending",
         timeoutMs: timeoutMs ?? this.config.defaultTimeoutMs,
+        
       };
+      groupId ? (event.group = { id: groupId, sequence: this.getNextSequenceNumber(groupId) }) : undefined;
 
     // Insert in priority order (higher priority first, then by timestamp)
     this.insertEventSorted(event);
@@ -126,6 +137,16 @@ export class OutboxQueue extends EventEmitter {
       }
     });
   }
+  private hasEarlierUnfinishedGroupEvent(event: OutboxEvent): boolean {
+    if(!event.group) return false; // No group, nothing to check
+    return this.events.some(
+      (e) =>
+        e.group !== undefined &&
+        e.group?.id === event.group?.id &&
+        e.group?.sequence < event.group?.sequence &&
+        e.status !== "completed"
+    );
+  }
 
   /**
    * Unregister a handler for a specific event type
@@ -149,20 +170,18 @@ export class OutboxQueue extends EventEmitter {
       while (!this.paused) {
         // Find pending events ready for processing
         const pendingEvents = this.events.filter((e) => e.status === "pending");
-
+        const eligibleEvents = pendingEvents.filter(e => 
+          this.isReadyForRetry(e) && !this.hasEarlierUnfinishedGroupEvent(e)
+        );
         if (pendingEvents.length === 0) {
-          // No pending events left, exit processing
           logger.debug("No pending events remaining");
           break;
         }
-
-        const nextEvent = pendingEvents.find((e) => this.isReadyForRetry(e));
-
-        if (!nextEvent) {
-          // No events ready for processing, wait a bit and check again
+        if (eligibleEvents.length === 0) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
           continue;
         }
+        const nextEvent = eligibleEvents[0];
 
         try {
           await this.processEvent(nextEvent);
@@ -214,7 +233,7 @@ export class OutboxQueue extends EventEmitter {
       const result = await handler(event.payload);
       event.status = "completed";
       this.emit("eventCompleted", event, result);
-      logger.debug(
+      logger.info(
         `Completed outbox event: ${event.type} (${event.id}) in ${
           Date.now() - (event.processingStartedAt || 0)
         }ms`
@@ -450,16 +469,81 @@ export class OutboxQueue extends EventEmitter {
    * Validate event structure
    */
   private isValidOutboxEvent(event: any): event is OutboxEvent {
-    return (
-      event &&
-      typeof event.id === "string" &&
-      typeof event.type === "string" &&
-      typeof event.timestamp === "number" &&
-      typeof event.priority === "number" &&
-      typeof event.retries === "number" &&
-      typeof event.maxRetries === "number" &&
-      typeof event.status === "string"
-    );
+    // Basic type checks
+    if (!event || typeof event !== 'object') {
+      return false;
+    }
+
+    // Required string fields
+    if (typeof event.id !== 'string' || event.id.trim() === '') {
+      return false;
+    }
+
+    if (typeof event.type !== 'string' || event.type.trim() === '') {
+      return false;
+    }
+
+    // Required number fields
+    if (typeof event.timestamp !== 'number' || !Number.isInteger(event.timestamp) || event.timestamp <= 0) {
+      return false;
+    }
+
+    if (typeof event.priority !== 'number' || !Number.isInteger(event.priority)) {
+      return false;
+    }
+
+    if (typeof event.retries !== 'number' || !Number.isInteger(event.retries) || event.retries < 0) {
+      return false;
+    }
+
+    if (typeof event.maxRetries !== 'number' || !Number.isInteger(event.maxRetries) || event.maxRetries < 0) {
+      return false;
+    }
+
+    // Validate status enum
+    const statuses: OutboxEventStatus[] = ['pending', 'processing', 'completed', 'failed', 'cancelled', 'timeout'];
+    if (!statuses.includes(event.status)) {
+      return false;
+    }
+
+    // Optional fields validation
+    if (event.nextRetryAt !== undefined && (typeof event.nextRetryAt !== 'number' || event.nextRetryAt <= 0)) {
+      return false;
+    }
+
+    if (event.lastError !== undefined && typeof event.lastError !== 'string') {
+      return false;
+    }
+
+    if (event.timeoutMs !== undefined && (typeof event.timeoutMs !== 'number' || event.timeoutMs <= 0)) {
+      return false;
+    }
+
+    if (event.processingStartedAt !== undefined && (typeof event.processingStartedAt !== 'number' || event.processingStartedAt <= 0)) {
+      return false;
+    }
+
+    // Validate group structure
+    if (event.group !== undefined) {
+      if (typeof event.group !== 'object' || event.group === null) {
+        return false;
+      }
+
+      if (typeof event.group.id !== 'string' || event.group.id.trim() === '') {
+        return false;
+      }
+
+      if (typeof event.group.sequence !== 'number' || !Number.isInteger(event.group.sequence) || event.group.sequence < 1) {
+        return false;
+      }
+    }
+
+    // Validate payload exists (can be any type)
+    if (event.payload === undefined) {
+      return false;
+    }
+
+    return true;
   }
 
   /**

@@ -202,14 +202,18 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
     if (this.config.queueFilePath) {
       await this.saveQueueState();
     }
-    const canResume = this.canResumeQueue();
-    if(canResume && this.isPaused()){
-      logger.info(`Resuming queue processing for task ${task.id}`);
-      this.resume();
+    if(this.isPaused()){
+      const canResume = this.canResumeQueue();
+      if(canResume){
+        logger.info(`Resuming queue processing for task ${task.id}`);
+        this.resume();
+      }
+      else{
+        logger.info(`Queue cannot be resumed`);
+      }
+
     }
-    else{
-      logger.info(`Queue cannot be resumed`);
-    }
+   
     this.emit("taskQueued", taskId, this.queue.length);
     callback({
       status: "queued",

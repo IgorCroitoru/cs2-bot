@@ -9,8 +9,8 @@ import TradesProcessor from "./src/Classes/TradesProcessor";
 import { getSocketClient, setupSocketClient, SocketClient } from "./src/socket";
 import config from "./config";
 import InventoryProcessor from "./src/Classes/InventoryProcessor";
-import { NewInventory } from "./src/Classes/NewInventory";
-import { NewTrades } from "./src/Classes/NewTrades";
+import { NewInventory } from "./src/Classes/Inventory";
+import { NewTrades } from "./src/Classes/Trades";
 import { OutboxQueue } from "./src/Classes/OutboxQueue";
 import { ServiceContainer } from "./ServiceContainer"; // Add this import
 

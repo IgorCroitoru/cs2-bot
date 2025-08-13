@@ -7,16 +7,15 @@ import bodyParser from "body-parser";
 import express, { response } from "express";
 import { logger } from "../../logger";
 import config from "../../config";
-import Inventory from "./Inventory";
 import { getItemCategory } from "../utils";
-import { NewInventory } from "./NewInventory";
+import {Inventory } from "./Inventory";
 import { ServiceContainer } from "../../ServiceContainer";
 export default class HttpManager {
   /**
    * The Express.js app.
    */
   protected app: express.Application;
-  private inventory: NewInventory;
+  private inventory: Inventory;
   /**
    * Initialize the HTTP manager.
    *

@@ -1,7 +1,7 @@
 // src/ServiceContainer.ts
 import { Bot } from "./src/Classes/Bot";
-import { NewTrades } from "./src/Classes/NewTrades";
-import { NewInventory } from "./src/Classes/NewInventory";
+import { Trades } from "./src/Classes/Trades";
+import { Inventory } from "./src/Classes/Inventory";
 import TradesProcessor from "./src/Classes/TradesProcessor";
 import InventoryProcessor from "./src/Classes/InventoryProcessor";
 import HttpManager from "./src/Classes/HttpManager";
@@ -12,8 +12,8 @@ export class ServiceContainer {
     private static instance: ServiceContainer;
     
     public bot?: Bot;
-    public tradeManager?: NewTrades;
-    public inventory?: NewInventory;
+    public tradeManager?: Trades;
+    public inventory?: Inventory;
     public httpManager?: HttpManager;
     public tradesProcessor?: TradesProcessor;
     public inventoryProcessor?: InventoryProcessor;
@@ -33,11 +33,11 @@ export class ServiceContainer {
         this.bot = bot;
     }
 
-    public setTradeManager(tradeManager: NewTrades): void {
+    public setTradeManager(tradeManager: Trades): void {
         this.tradeManager = tradeManager;
     }
 
-    public setInventory(inventory: NewInventory): void {
+    public setInventory(inventory: Inventory): void {
         this.inventory = inventory;
     }
 
@@ -67,12 +67,12 @@ export class ServiceContainer {
         return this.bot;
     }
 
-    public getTradeManager(): NewTrades {
+    public getTradeManager(): Trades {
         if (!this.tradeManager) throw new Error('TradeManager not initialized');
         return this.tradeManager;
     }
 
-    public getInventory(): NewInventory {
+    public getInventory(): Inventory {
         if (!this.inventory) throw new Error('Inventory not initialized');
         return this.inventory;
     }

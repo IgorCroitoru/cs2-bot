@@ -1,34 +1,66 @@
-import Inventory from "./Inventory";
 import { SocketClient } from "../socket";
 import { logger } from "../../logger";
-import { NewInventory } from "./NewInventory";
+import { Inventory } from "./Inventory";
 import { Socket } from "socket.io-client";
-import { InventorySocketEventsIngoing, InventorySocketEventsOutgoing } from "./Interfaces/SocketEvents";
+import {
+  InventorySocketEventsIngoing,
+  InventorySocketEventsOutgoing,
+} from "./Interfaces/SocketEvents";
+import { TaskQueueResponse } from "./AbstractTaskQueue";
+import { CustomError } from "./CustomError";
 
 export default class InventoryProcessor {
   constructor(
-    readonly inventory: NewInventory,
-    readonly socket: Socket<InventorySocketEventsIngoing, InventorySocketEventsOutgoing>
+    readonly inventory: Inventory,
+    readonly socket: Socket<
+      InventorySocketEventsIngoing,
+      InventorySocketEventsOutgoing
+    >
   ) {}
   async start() {
     this.bindEvents();
   }
   private bindEvents() {
     //SOCKET EVENTS
-    this.socket.on("inventoryFetch", (steamId, callback) => {
-      this.inventory.enqueue({ steamId }, (response) => {
-        try {
-          logger.info(`Inventory request for ${steamId}`);
-          callback(response);
-        } catch (err) {
+    this.socket.on("inventoryFetch", async (steamId, callback) => {
+      try {
+        const result = await new Promise<TaskQueueResponse>((resolve) => {
+          this.inventory.enqueue({ steamId }, (response) => {
+            resolve(response);
+          });
+        });
+        if (result.status === "queued") {
+          callback({
+            status: "ok",
+            data: result,
+          });
+        } else {
+          callback({
+            status: "error",
+            error: result.error,
+            data: result,
+          });
+        }
+      } catch (e) {
+        logger.error(`Error processing inventory fetch for ${steamId}:`, e);
+        if (e instanceof CustomError) {
           callback({
             status: "error",
             error: {
-              message: err instanceof Error ? err.message : String(err),
+              eresult: e.eresult,
+              message: e.message,
+              cause: e.cause,
+            },
+          });
+        } else {
+          callback({
+            status: "error",
+            error: {
+              message: e instanceof Error ? e.message : String(e),
             },
           });
         }
-      });
+      }
     });
     this.socket.on("pauseInventory", (paused, cause, pauseEnd) => {
       logger.info(`Pausing inventory processor: ${paused} - ${cause}`);

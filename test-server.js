@@ -354,6 +354,32 @@ io.on('connection', (socket) => {
             socketId: socket.id
         });
     });
+    socket.on('offerCreation', (payload, callback) => {
+        log('info', 'offerCreation (from bot)', { socketId: socket.id, payload });
+        // Optional: broadcast to observers (not back to the same bot)
+        socket.broadcast.emit('offerCreation', payload);
+        if (typeof callback === 'function') {
+        callback({ status: 'ok' });
+        }
+    });
+
+    // Bot -> Server: offerChangedState
+    socket.on('offerChangedState', (payload, callback) => {
+        log('info', 'offerChangedState (from bot)', { socketId: socket.id, payload });
+        socket.broadcast.emit('offerChangedState', payload);
+        if (typeof callback === 'function') {
+        callback({ status: 'ok' });
+        }
+    });
+
+    // Bot -> Server: tradesPaused
+    socket.on('tradesPaused', (paused, cause, pauseEnd, callback) => {
+        log('info', 'tradesPaused (from bot)', { socketId: socket.id, paused, cause, pauseEnd });
+        socket.broadcast.emit('tradesPaused', paused, cause, pauseEnd);
+        if (typeof callback === 'function') {
+        callback({ status: 'ok' });
+        }
+    });
 });
 
 // ============================================================================

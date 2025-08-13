@@ -2,8 +2,19 @@ import TradeOfferManager, { MEconItemExchange } from "steam-tradeoffer-manager";
 import DealDto from "../Dtos/DealDto";
 import CEconItem from "steamcommunity/classes/CEconItem";
 import { ExtendedMEconItemExchange } from "./ExtendedItem";
-import { InventoryQueueResponse, InventoryStatus } from "../Inventory";
 import { TaskQueueResponse } from "../AbstractTaskQueue";
+export interface InventoryQueueResponse {
+    status: InventoryStatus;
+    error?: {
+        message: string,
+        retry_after?: number,
+    };
+    message?: string;
+    queue_position?: number;
+    estimated_wait?: number;
+    inventory?: CEconItem[];
+}
+export type InventoryStatus = 'ok' | 'error' | 'queued' | 'retrying' | 'bot_unavailable' | 'service_paused';
 
 // export type StatusType = 'needsConf' | 'pending' | 'assigned' | 'active' | 'accepted' | 'cancelled' | 'declined' | 'failed';
 
@@ -67,7 +78,7 @@ export interface OfferCreationPayload<Metadata = any> {
 
 // Inventory Events
 export interface InventorySocketEventsIngoing {
-  "inventoryFetch": (steamId: string, callback: ResponseCallbackInventory) => void;
+  "inventoryFetch": (steamId: string, callback: ResponseCallback<TaskQueueResponse>) => void;
   "pauseInventory": (paused: boolean, cause: string | null, pauseEnd: number, callback?: ResponseCallback) => void;
   [key: string]: (...args:any[]) => void;
 }

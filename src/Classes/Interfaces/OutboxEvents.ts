@@ -2,7 +2,7 @@
 import { OutgoingEvents } from "./SocketEvents";
 
 
-
+export type OutboxEventStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'timeout';
 export interface OutboxEvent<T = any> {
   id: string;
   type: keyof OutgoingEvents;
@@ -13,9 +13,15 @@ export interface OutboxEvent<T = any> {
   maxRetries: number;
   nextRetryAt?: number;
   lastError?: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'timeout';
+  status: OutboxEventStatus;
   timeoutMs?: number; // Individual event timeout
   processingStartedAt?: number; // When processing started (for timeout calculation)
+  //grouped events when we have to send to server some events sequentially
+  //for example when we have to send first creation of an offer and after to send a state change
+  group?: {
+    id: string;
+    sequence: number;
+  }
 }
 
 
