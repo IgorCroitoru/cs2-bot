@@ -384,6 +384,18 @@
                     Fetch Inventory
                 </button>
             </div>
+            
+            <!-- Request Inventory Item Info -->
+            <div class="control-group">
+                <label for="assetId">Asset ID:</label>
+                <input type="text" id="assetId" value="" placeholder="Enter Asset ID">
+                <button id="requestItemInfoBtn" class="btn-success">
+                    <span class="loading-spinner" id="itemInfoSpinner" style="display: none;"></span>
+                    Request Item Info
+                </button>
+            </div>
+            <div id="itemInfoResponse" class="response-container" style="display: none;"></div>
+            
             <div id="inventoryResponse" class="response-container" style="display: none;"></div>
             <div id="inventoryDisplay" class="inventory-display" style="display: none;">
                 <h3>Inventory Items:</h3>
@@ -432,6 +444,7 @@
                 <label for="eventType">Event Type:</label>
                 <select id="eventType">
                     <option value="inventoryFetched">inventoryFetched</option>
+                    <option value="requestInventoryItemInfo">requestInventoryItemInfo</option>
                     <option value="offerCreation">offerCreation</option>
                     <option value="offerChangedState">offerChangedState</option>
                     <option value="tradesPaused">tradesPaused</option>
@@ -477,10 +490,14 @@
             initializeEventListeners() {
                 document.getElementById('testConnectionBtn').addEventListener('click', () => this.testConnection());
                 document.getElementById('fetchInventoryBtn').addEventListener('click', () => this.fetchInventory());
+                document.getElementById('requestItemInfoBtn').addEventListener('click', () => this.requestInventoryItemInfo());
                 document.getElementById('getStatusBtn').addEventListener('click', () => this.getServerStatus());
                 document.getElementById('getBotsBtn').addEventListener('click', () => this.getConnectedBots());
                 document.getElementById('simulateEventBtn').addEventListener('click', () => this.simulateEvent());
                 document.getElementById('clearLogsBtn').addEventListener('click', () => this.clearLogs());
+                
+                // Event type change handler
+                document.getElementById('eventType').addEventListener('change', () => this.updateEventPayload());
                 
                 // Trade functionality
                 document.getElementById('selectAllBtn').addEventListener('click', () => this.selectAllItems());
@@ -599,6 +616,59 @@
                 }
             }
 
+            async requestInventoryItemInfo() {
+                const assetId = document.getElementById('assetId').value.trim();
+                if (!assetId) {
+                    this.log('error', 'Please enter an Asset ID');
+                    return;
+                }
+
+                const serverUrl = this.getServerUrl();
+                const responseContainer = document.getElementById('itemInfoResponse');
+                const spinner = document.getElementById('itemInfoSpinner');
+                const button = document.getElementById('requestItemInfoBtn');
+
+                try {
+                    // Show loading state
+                    spinner.style.display = 'inline-block';
+                    button.disabled = true;
+                    responseContainer.style.display = 'block';
+                    responseContainer.innerHTML = '<div class="status loading">Requesting item info...</div>';
+
+                    const { response, data } = await this.makeRequest(`${serverUrl}/api/socket/requestInventoryItemInfo`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ assetId: assetId })
+                    });
+                    
+                    // Display response
+                    responseContainer.innerHTML = `
+                        <div class="status ${response.ok ? 'success' : 'error'}">
+                            ${response.ok ? 'Success' : 'Failed'}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+
+                    if (response.ok && data.status === 'ok') {
+                        this.log('success', `Retrieved info for item ${assetId}`);
+                    } else {
+                        this.log('error', `Failed to get item info: ${data.error?.message || 'Unknown error'}`);
+                    }
+
+                } catch (error) {
+                    responseContainer.innerHTML = `
+                        <div class="status error">Request Failed</div>
+                        <pre>Error: ${error.message}</pre>
+                    `;
+                    this.log('error', `Request failed: ${error.message}`);
+                } finally {
+                    spinner.style.display = 'none';
+                    button.disabled = false;
+                }
+            }
+
             displayInventory(inventory) {
                 const inventoryDisplay = document.getElementById('inventoryDisplay');
                 const inventoryGrid = document.getElementById('inventoryGrid');
@@ -616,12 +686,19 @@
                         <div class="item-name">${item.name || 'Unknown Item'}</div>
                         <div class="item-details">
                             ${item.type || 'Unknown Type'}<br>
-                            ${item.tradable ? 'Tradable' : 'Not Tradable'}
+                            ${item.tradable ? 'Tradable' : 'Not Tradable'}<br>
+                            <small>ID: ${item.id || item.assetid || 'N/A'}</small>
                         </div>
                     `;
                     
                     // Add click handler for item selection
-                    itemElement.addEventListener('click', () => this.toggleItemSelection(index, itemElement));
+                    itemElement.addEventListener('click', () => {
+                        this.toggleItemSelection(index, itemElement);
+                        // Auto-fill asset ID for inventory item info testing
+                        if (item.id || item.assetid) {
+                            document.getElementById('assetId').value = item.id || item.assetid;
+                        }
+                    });
                     
                     inventoryGrid.appendChild(itemElement);
                 });
@@ -712,6 +789,24 @@
                         <div class="status error">Request Failed</div>
                         <pre>Error: ${error.message}</pre>
                     `;
+                }
+            }
+
+            updateEventPayload() {
+                const eventType = document.getElementById('eventType').value;
+                const eventPayloadInput = document.getElementById('eventPayload');
+                
+                const payloadTemplates = {
+                    'inventoryFetched': '{"test": "data"}',
+                    'requestInventoryItemInfo': '{"assetId": "39699403433"}',
+                    'offerCreation': '{"userId": "76561198123456789", "items": []}',
+                    'offerChangedState': '{"offerId": "12345", "state": "Accepted"}',
+                    'tradesPaused': '{"reason": "Manual pause"}',
+                    'botPaused': '{"reason": "Manual pause"}'
+                };
+                
+                if (payloadTemplates[eventType]) {
+                    eventPayloadInput.value = payloadTemplates[eventType];
                 }
             }
 

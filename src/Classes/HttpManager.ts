@@ -10,6 +10,7 @@ import config from "../../config";
 import { getItemCategory } from "../utils";
 import {Inventory } from "./Inventory";
 import { ServiceContainer } from "../../ServiceContainer";
+import { InventoryItemInfo, ItemInfo } from "./Inspect/GameData";
 export default class HttpManager {
   /**
    * The Express.js app.
@@ -37,6 +38,38 @@ export default class HttpManager {
     this.app.get("/uptime", (req, res) =>
       res.json({ uptime: process.uptime() })
     );
+    // this.app.get("/inventory", async (req, res)=> {
+    //   const inventory: InventoryItemInfo[] = []
+    //   const gameData = this.services.getInspectProcessor().gameData;
+    //   this.services.getBot().csClient.inventory?.map(item=> {
+    //     let modItem = Object.assign({}, item) as InventoryItemInfo;
+    //     gameData.addAdditionalInventoryItemProperties(modItem);
+    //     inventory.push(modItem);
+    //   })
+    //   console.log(inventory[0])
+    //   res.json(inventory)
+    // })
+    // this.app.get("/inspect/:owner/:assetId/:D", async (req,res)=> {
+    //   const owner = req.params.owner;
+    //   const assetId = req.params.assetId;
+    //   const D = req.params.D;
+    //   if (!owner || !assetId || !D) {
+    //     return res.status(400).json({ error: "Owner, Asset ID and D are required" });
+    //   }
+    //   try {
+    //    this.services.getBot().csClient.inspectItem(owner, assetId, D, (item) => {
+    //     let itemModified = Object.assign({}, item) as ItemInfo;
+    //     this.services.getInspectProcessor().gameData.addAdditionalItemProperties(itemModified)
+    //       res.json(itemModified);
+    //     });
+    //   } catch (error) {
+    //     logger.error("Error inspecting item:", error);
+    //     res.status(500).json({
+    //       status: "error",
+    //       error: error instanceof Error ? error.message : String(error),
+    //     });
+    //   }
+    // })
     this.app.post("/trade/:steamId", async (req, res)=> {
       const steamId = req.params.steamId;
       const tradeLink = req.body.tradeLink;

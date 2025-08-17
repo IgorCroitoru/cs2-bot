@@ -7,10 +7,13 @@ import InventoryProcessor from "./src/Classes/InventoryProcessor";
 import HttpManager from "./src/Classes/HttpManager";
 import { OutboxQueue } from "./src/Classes/OutboxQueue";
 import { SocketClient } from "./src/socket";
+// import { InspectProcessor } from "./src/Classes/Inspect/InspectProcessor";
+import GameData from "./src/Classes/Inspect/GameData";
+import { StatsPublisher } from "./src/Classes/StatPublisher";
 
 export class ServiceContainer {
     private static instance: ServiceContainer;
-    
+    public statsPublisher?: StatsPublisher;
     public bot?: Bot;
     public tradeManager?: Trades;
     public inventory?: Inventory;
@@ -19,7 +22,8 @@ export class ServiceContainer {
     public inventoryProcessor?: InventoryProcessor;
     public outboxQueue?: OutboxQueue;
     public socketClient?: SocketClient;
-
+    // public inspectProcessor?: InspectProcessor;
+    public gameData?: GameData; 
     private constructor() {}
 
     public static getInstance(): ServiceContainer {
@@ -27,6 +31,10 @@ export class ServiceContainer {
             ServiceContainer.instance = new ServiceContainer();
         }
         return ServiceContainer.instance;
+    }
+
+    public setStatsPublisher(statsPublisher: StatsPublisher): void {
+        this.statsPublisher = statsPublisher;
     }
 
     public setBot(bot: Bot): void {
@@ -60,8 +68,17 @@ export class ServiceContainer {
     public setSocketClient(socketClient: SocketClient): void {
         this.socketClient = socketClient;
     }
-
+    // public setInspectProcessor(inspectProcessor: InspectProcessor): void {
+    //     this.inspectProcessor = inspectProcessor;
+    // }
+    public setGameData(gameData: GameData): void {
+        this.gameData = gameData;
+    }
     // Getter methods with validation
+    public getStatsPublisher(): StatsPublisher {
+        if (!this.statsPublisher) throw new Error('StatsPublisher not initialized');
+        return this.statsPublisher;
+    }
     public getBot(): Bot {
         if (!this.bot) throw new Error('Bot not initialized');
         return this.bot;
@@ -102,19 +119,28 @@ export class ServiceContainer {
         return this.socketClient;
     }
 
-    // Utility method to check if all services are ready
-    public isReady(): boolean {
-        return !!(
-            this.bot &&
-            this.tradeManager &&
-            this.inventory &&
-            this.httpManager &&
-            this.tradesProcessor &&
-            this.inventoryProcessor &&
-            this.outboxQueue &&
-            this.socketClient
-        );
+    // public getInspectProcessor(): InspectProcessor {
+    //     if (!this.inspectProcessor) throw new Error('InspectProcessor not initialized');
+    //     return this.inspectProcessor;
+    // }
+    public getGameData(): GameData {
+        if (!this.gameData) throw new Error('GameData not initialized');
+        return this.gameData;
     }
+    // Utility method to check if all services are ready
+    // public isReady(): boolean {
+    //     return !!(
+    //         this.bot &&
+    //         this.tradeManager &&
+    //         this.inventory &&
+    //         this.httpManager &&
+    //         this.tradesProcessor &&
+    //         this.inventoryProcessor &&
+    //         this.outboxQueue &&
+    //         this.socketClient &&
+    //         this.inspectProcessor
+    //     );
+    // }
 
     // Clean shutdown method
     public async shutdown(): Promise<void> {

@@ -84,6 +84,9 @@ export abstract class AbstractTaskProcessor<
   protected pauseTimeoutId: NodeJS.Timeout | null = null;
   protected pauseReason: string | null = null;
   protected jobSet: Set<string> = new Set<string>();
+  protected totalProcessed: number = 0;
+  protected totalFailed: number = 0;
+  protected lastProcessedAt: number = 0;
   // protected _config: TaskProcessorConfig;
 
   constructor(
@@ -296,10 +299,13 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
           continue; 
         }
         await this.processTask(task);
+        this.lastProcessedAt = Date.now();
+        this.totalProcessed++;
         this.emit("taskCompleted", task.id);
       } catch (err) {
         logger.debug(`Error processing task ${task.id}:`, err);
         await this.handleTaskError(task, err);
+        this.totalFailed++;
         this.emit("taskFailed", task.id, err);
       }
 
@@ -470,9 +476,13 @@ public override off<K extends keyof TaskQueueEvents | keyof EventMap | string | 
       size: this.queue.length,
       processing: this.processing,
       paused: this._paused,
+      pauseReason: this.pauseReason,
+      totalProcessed: this.totalProcessed,
+      totalFailed: this.totalFailed,
       pause_end_time: this.getPauseEndTime(),
       pause_time_remaining_ms: this.getPauseTimeRemaining(),
       pause_time_remaining_human: this.formatPauseTimeRemaining(),
+      lastProcessedAt: this.lastProcessedAt,
       estimated_wait: this.queue.length * this.config.delayBetweenTasks,
     };
   }

@@ -1,7 +1,7 @@
 import TradeOffer from "steam-tradeoffer-manager/lib/classes/TradeOffer";
 import CEconItem from "steamcommunity/classes/CEconItem";
 import Deal from "../Deal";
-import { InventoryStatus } from "../Inventory";
+import { InventoryStatus } from "./SocketEvents";
 
 export type TradeEvents = {
     offerCreation:[error:Error | null, deal:Deal, offer?:TradeOffer];

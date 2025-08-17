@@ -50,7 +50,7 @@ export class OutboxQueue extends EventEmitter {
   private processing = false;
   private paused = false;
   private eventHandlers: Partial<OutboxEventHandlers<OutgoingEvents>> = {};
-
+  private lastProcessedAt?: number;
   constructor(private config: OutboxConfig) {
     super();
     this.loadEvents();
@@ -178,7 +178,7 @@ export class OutboxQueue extends EventEmitter {
           break;
         }
         if (eligibleEvents.length === 0) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
           continue;
         }
         const nextEvent = eligibleEvents[0];
@@ -248,6 +248,9 @@ export class OutboxQueue extends EventEmitter {
       } else {
         this.handleEventError(event, error);
       }
+    }
+    finally {
+      this.lastProcessedAt = Date.now();
     }
   }
 
@@ -602,21 +605,17 @@ export class OutboxQueue extends EventEmitter {
   public getStats() {
     const stats = {
       total: this.events.length,
-      pending: 0,
-      processing: 0,
-      completed: 0,
-      failed: 0,
-      cancelled: 0,
-      timeout: 0,
-      byType: {} as Record<string, number>,
+      pending: this.events.filter((e) => e.status === "pending").length,
+      processing: this.events.filter((e) => e.status === "processing").length,
+      completed: this.events.filter((e) => e.status === "completed").length,
+      failed: this.events.filter((e) => e.status === "failed").length,
+      cancelled: this.events.filter((e) => e.status === "cancelled").length,
+      timeout: this.events.filter((e) => e.status === "timeout").length,
+      lastProcessedAt: this.lastProcessedAt,
       isProcessing: this.processing,
       isPaused: this.paused,
     };
 
-    this.events.forEach((event) => {
-      stats[event.status]++;
-      stats.byType[event.type] = (stats.byType[event.type] || 0) + 1;
-    });
 
     return stats;
   }

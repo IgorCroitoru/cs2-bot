@@ -2,7 +2,7 @@ import { io as Client, Socket } from "socket.io-client";
 import dotenv from 'dotenv';
 import path from 'path';
 import { logger } from "../../logger";
-import { InitQuery, InventorySocketEventsIngoing, InventorySocketEventsOutgoing, SocketEvents, TradeSocketEventsIngoing, TradeSocketEventsOutgoing } from "../Classes/Interfaces/SocketEvents";
+import { IngoingEvents, InitQuery, InventorySocketEventsIngoing, InventorySocketEventsOutgoing, OutgoingEvents, SocketEvents, TradeSocketEventsIngoing, TradeSocketEventsOutgoing } from "../Classes/Interfaces/SocketEvents";
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 type SocketClientOptions = {
@@ -11,7 +11,7 @@ type SocketClientOptions = {
     reconnectDelay?: number;
 };
 
-export class SocketClient<TIngoing extends Record<string, any> = TradeSocketEventsIngoing, TOutgoing extends Record<string, any> = TradeSocketEventsOutgoing> {
+export class SocketClient<TIngoing extends Record<string, any> = IngoingEvents, TOutgoing extends Record<string, any> = OutgoingEvents> {
     public socket: Socket<TIngoing, TOutgoing>;
     private isVolatile = false;
     retryCounter = 0;

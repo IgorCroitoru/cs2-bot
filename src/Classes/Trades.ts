@@ -21,6 +21,7 @@ import timersPromises from "timers/promises";
 import Deal from "./Deal";
 import * as files from "../lib/files";
 import path from "path";
+import GameData from "./Inspect/GameData";
 
 export enum EPauseReason {
   /**
@@ -45,8 +46,8 @@ export type PauseReasonKeys = keyof typeof EPauseReason;
 export class Trades extends AbstractTaskProcessor<DealDto, TradeEvents> {
   private declineQueue: TradeOffer[] = [];
   private isProcessingDeclines = false;
+  public readonly gameData: GameData;
   protected override pauseReason: EPauseReason | null = null;
-  // private _dealError: {[dealId: number]: DealErrorData} = {};
   private _pauseConfig: {
     totalTradeLimit: number;
     userTradeLimit: number;
@@ -54,10 +55,10 @@ export class Trades extends AbstractTaskProcessor<DealDto, TradeEvents> {
     totalTradeLimit: 30,
     userTradeLimit: 5,
   };
-  // private _pausedUsers: Set<string> = new Set(); // Users who have hit the 5 trade limit
-
-  constructor(bot: Bot, config: TaskProcessorConfig) {
+  //Currently mixing game data with trades, mb I'll change it in future
+  constructor(bot: Bot, config: TaskProcessorConfig, gameData: GameData) {
     super(bot, config);
+    this.gameData = gameData;
     // this.loadPauseConfig();
     // this.loadPausedUsers();
   }

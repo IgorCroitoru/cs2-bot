@@ -8,7 +8,7 @@ import {
   ResponseCallbackData,
 } from "./Interfaces/SocketEvents";
 import { logger } from "../../logger";
-import {  PollData } from "./Interfaces/PollData";
+import { PollData } from "./Interfaces/PollData";
 // import { mainServerAck } from "./Interfaces/PollData";
 import { CustomError } from "./CustomError";
 import { delay, ensureArray, hydrateItemArray } from "../utils";
@@ -20,10 +20,11 @@ import { Trades } from "./Trades";
 import { Socket } from "socket.io-client";
 import { OutboxQueue } from "./OutboxQueue";
 import { TaskQueueResponse } from "./AbstractTaskQueue";
+import { InventoryItemInfo } from "./Inspect/GameData";
 export default class TradesProcessor {
   constructor(
     private readonly trades: Trades,
-    private readonly socket: Socket<IngoingEvents,OutgoingEvents>,
+    private readonly socket: Socket<IngoingEvents, OutgoingEvents>,
     private readonly outbox: OutboxQueue
   ) {}
 
@@ -32,122 +33,186 @@ export default class TradesProcessor {
     this.setupHandlers();
     //loading queued trades from file
     await this.trades.loadQueueState();
-    
+
     this.trades.bindEvents();
     this.trades.process();
-    
   }
   private setupHandlers() {
-      // Register multiple handlers at once
-    
-      this.outbox.registerHandlers({
-      
-        activeOffersPollData: async(payload)=>{
-          try {
-              this.socket.emit("activeOffersPollData", payload)  
-          } catch (error) {
-            throw error;
-          }
-        },
-        offerCreation: async (payload) => {
-          try {
-            const response = await new Promise<ResponseCallbackData>((resolve, reject) => {
-              this.socket.volatile.timeout(config.socket.ackTTL).emit("offerCreation", payload, (err, response) => {
-                if (err) {
-                  reject(err); 
-                } else if (response) {
-                  resolve(response); 
-                } else {
-                  reject(new Error("Unexpected response format"));
-                }
-              });
-            });
+    // Register multiple handlers at once
+
+    this.outbox.registerHandlers({
+      activeOffersPollData: async (payload) => {
+        try {
+          this.socket.emit("activeOffersPollData", payload);
+        } catch (error) {
+          throw error;
+        }
+      },
+      inventoryItemInfo: async (item)=> {
+        try {
+          const response = await new Promise<ResponseCallbackData>(
+            (resolve, reject) => {
+              this.socket.volatile
+                .timeout(config.socket.ackTTL)
+                .emit("inventoryItemInfo", item, (err, response) => {
+                  if (err) {
+                    reject(err);
+                  } else if (response?.error) {
+                    reject(response.error);
+                  } else if (response) {
+                    resolve(response);
+                  } else {
+                    reject(new Error("Unexpected response format"));
+                  }
+                });
+            }
+          );
           return response;
         } catch (error) {
           throw error;
         }
-        },
-  
-        offerChangedState: async (payload) => {
-          try {
-            const response = await new Promise<ResponseCallbackData>((resolve, reject) => {
-              this.socket.volatile.timeout(config.socket.ackTTL).emit("offerChangedState", payload, (err, response) => {
-                if (err) {
-                  reject(err); 
-                } else if (response) {
-                  resolve(response); 
-                } else {
-                  reject(new Error("Unexpected response format"));
-                }
-              });
-            });
+      },
+      offerCreation: async (payload) => {
+        try {
+          const response = await new Promise<ResponseCallbackData>(
+            (resolve, reject) => {
+              this.socket.volatile
+                .timeout(config.socket.ackTTL)
+                .emit("offerCreation", payload, (err, response) => {
+                  if (err) {
+                    reject(err);
+                  } else if (response?.error) {
+                    reject(response.error);
+                  } else if (response) {
+                    resolve(response);
+                  } else {
+                    reject(new Error("Unexpected response format"));
+                  }
+                });
+            }
+          );
           return response;
         } catch (error) {
           throw error;
         }
-        },
-      });
-    }
+      },
+
+      offerChangedState: async (payload) => {
+        try {
+          const response = await new Promise<ResponseCallbackData>(
+            (resolve, reject) => {
+              this.socket.volatile
+                .timeout(config.socket.ackTTL)
+                .emit("offerChangedState", payload, (err, response) => {
+                  if (err) {
+                    reject(err);
+                  } else if (response?.error) {
+                    reject(response.error);
+                  } else if (response) {
+                    resolve(response);
+                  } else {
+                    reject(new Error("Unexpected response format"));
+                  }
+                });
+            }
+          );
+          return response;
+        } catch (error) {
+          throw error;
+        }
+      },
+    });
+  }
   bindEvents() {
     //bot events
     this.trades.bot.on("paused", (paused, cause, pauseEnd) => {
-      if(!paused && !this.trades.isPaused){
+      if (!paused && !this.trades.isPaused) {
         this.trades.resume();
       }
-    })
+    });
     this.trades.bot.on("ready", (ready) => {
-      if(ready && !this.trades.bot.isPaused && !this.trades.isPaused){
+      if (ready && !this.trades.bot.isPaused && !this.trades.isPaused) {
         this.trades.resume();
       }
-    })
+    });
     //SOCKETS EVENTS BINDING
     this.socket.on("connect", async () => {
       this.outbox.resume();
       this.outbox.retryAllTimedOutEvents();
-      logger.info("Socket connected")
+      logger.info("Socket connected");
       logger.debug("Outbox resumed due to socket connect");
-      
     });
-    this.socket.on("disconnect", (reason, description)=>{
+    this.socket.on("disconnect", (reason, description) => {
       logger.info(`Socket disconnected: ${reason} - ${description}`);
       this.outbox.pause();
       logger.info("Outbox paused due to socket disconnect");
-    })
-    
+    });
+
     this.socket.on("pauseTrade", (paused, cause, pauseEnd) => {
       logger.info(`Pausing trades processor: ${paused} - ${cause}`);
       if (paused) {
         this.trades.pause(pauseEnd - Date.now(), cause);
-      }
-      else{
+      } else {
         this.trades.resume();
       }
     });
-    this.socket.on("newDeal", async (deal, callback) => {
-      try {
-       deal.items_to_give = deal.items_to_give ? hydrateItemArray(deal.items_to_give) : [];
-       deal.items_to_receive = deal.items_to_receive ? hydrateItemArray(deal.items_to_receive) : [];
-       const result = await new Promise<TaskQueueResponse>((resolve) => {
-        this.trades.enqueue(deal, (response) => {
-          resolve(response);
-        });
-      });
-      if(result.status === "queued"){
+    this.socket.on("requestInventoryItemInfo", async (assetId, callback) => {
+        const items = this.trades.bot.csClient.inventory
+        if(items === undefined){
+          callback({
+            status: "error",
+            error: {
+              message: "Client is probably not connected to GC",
+            },
+          });
+          return;
+        }
+        const item = items.find((i) => i.id === assetId);
+        if (!item) {
+          callback({
+            status: "error",
+            error: {
+              message: `Item with asset ID ${assetId} not found in inventory`,
+            },
+          });
+          return;
+        }
+        const itemInfo: InventoryItemInfo = Object.assign({}, item) as InventoryItemInfo;
+        this.trades.gameData.addAdditionalInventoryItemProperties(itemInfo);
         callback({
           status: "ok",
-          data: result
-        })
-      }
-      else {
-        callback({
-          status: "error",
-          error: result.error,
-          data: result
+          data: itemInfo
         });
-      }
+       
+    });
+    this.socket.on("newDeal", async (deal, callback) => {
+      try {
+        deal.items_to_give = deal.items_to_give
+          ? hydrateItemArray(deal.items_to_give)
+          : [];
+        deal.items_to_receive = deal.items_to_receive
+          ? hydrateItemArray(deal.items_to_receive)
+          : [];
+        const result = await new Promise<TaskQueueResponse>((resolve) => {
+          this.trades.enqueue(deal, (response) => {
+            resolve(response);
+          });
+        });
+        if (result.status === "queued") {
+          callback({
+            status: "ok",
+            data: result,
+          });
+        } else {
+          callback({
+            status: "error",
+            error: result.error,
+            data: result,
+          });
+        }
       } catch (e) {
         logger.error(`Error processing new deal ${deal.id}:`, e);
-         if (e instanceof CustomError) {
+        if (e instanceof CustomError) {
           callback({
             status: "error",
             error: {
@@ -157,17 +222,22 @@ export default class TradesProcessor {
             },
           });
         } else {
-          callback({ 
-            status: "error", 
+          callback({
+            status: "error",
             error: {
               message: e instanceof Error ? e.message : String(e),
-            }
+            },
           });
         }
       }
     });
 
     //TRADES EVENTS BINDING
+    this.trades.bot.csClient.on("itemAcquired", (item) => {
+      const itemInfo = Object.assign({}, item) as InventoryItemInfo
+      this.trades.gameData.addAdditionalInventoryItemProperties(itemInfo);
+      this.outbox.addEvent("inventoryItemInfo", itemInfo);
+    })
     this.trades.on("offerCreation", async (error, deal, offer) => {
       if (offer) {
         const created_at = Math.floor(Date.now() / 1000);
@@ -180,8 +250,8 @@ export default class TradesProcessor {
         offer.data("trade_offer_expiry_at", expiry_at);
         try {
           const data: OfferCreationPayload<OfferMetadata> = {
-            metadata:{
-              dealId: deal.id
+            metadata: {
+              dealId: deal.id,
             },
             offerId: offer.id,
             error: error,
@@ -189,28 +259,42 @@ export default class TradesProcessor {
             trade_offer_created_at: created_at,
             trade_offer_expiry_at: expiry_at,
           };
-          this.outbox.addEvent("offerCreation", data, undefined, undefined, undefined, offer.id)
+          this.outbox.addEvent(
+            "offerCreation",
+            data,
+            undefined,
+            undefined,
+            undefined,
+            offer.id
+          );
         } catch (e) {
-          logger.error(`Unexpected error while emitting offer creation event for deal ${deal.id}:`, e);
+          logger.error(
+            `Unexpected error while emitting offer creation event for deal ${deal.id}:`,
+            e
+          );
         }
       } else if (error) {
         logger.error(
-          `Error while creating offer for deal ${deal.id}: ${error.message}`, error
+          `Error while creating offer for deal ${deal.id}: ${error.message}`,
+          error
         );
         try {
           //emitting error
           const data: OfferCreationPayload<OfferMetadata> = {
             metadata: {
-              dealId: deal.id
+              dealId: deal.id,
             },
             error: error,
             trade_offer_expiry_at: null,
             trade_offer_created_at: null,
           };
-          this.outbox.addEvent("offerCreation", data)
+          this.outbox.addEvent("offerCreation", data);
           //..............
         } catch (e) {
-           logger.error(`Unexpected error while emitting offer [deal id: ${deal.id}] creation error:`, e);
+          logger.error(
+            `Unexpected error while emitting offer [deal id: ${deal.id}] creation error:`,
+            e
+          );
         }
       } else {
         logger.error(
@@ -221,15 +305,20 @@ export default class TradesProcessor {
 
     //TRADE MANAGER EVENTS
     this.trades.bot.tradeManager.on("pollData", (data: PollData) => {
-     
-      const activeTrades = this.trades.getActiveOffers(data)
-      const entries = [...Object.entries(activeTrades.sent), ...Object.entries(activeTrades.received)]
-      const activeOffersPollData = entries.reduce<OutgoingActiveOffersPollData>((acc, [offerId, offerData]) => {
-        acc.offers[offerId] = {
-          steamId64: offerData.partnerId
-        };
-        return acc;
-      }, { offers: {} });
+      const activeTrades = this.trades.getActiveOffers(data);
+      const entries = [
+        ...Object.entries(activeTrades.sent),
+        ...Object.entries(activeTrades.received),
+      ];
+      const activeOffersPollData = entries.reduce<OutgoingActiveOffersPollData>(
+        (acc, [offerId, offerData]) => {
+          acc.offers[offerId] = {
+            steamId64: offerData.partnerId,
+          };
+          return acc;
+        },
+        { offers: {} }
+      );
       this.socket.emit("activeOffersPollData", activeOffersPollData);
     });
     this.trades.bot.tradeManager.on("newOffer", (offer) => {
@@ -249,10 +338,9 @@ export default class TradesProcessor {
         const pollData = this.trades.bot.tradeManager.pollData as PollData;
         if (offer.id !== undefined) {
           const offerData = pollData.offerData[offer.id];
-          
 
           let payload: OfferChangeStatePayload<OfferMetadata> = {
-            metadata:{ dealId: offerData?.dealId },
+            metadata: { dealId: offerData?.dealId },
             state: offer.state,
             offerId: offer.id,
             trade_offer_finished_at: this.trades.isOfferFinished(offer.state)
@@ -276,8 +364,14 @@ export default class TradesProcessor {
               payload.sent = value.sent;
             }
           }
-          this.outbox.addEvent("offerChangedState", payload, undefined, undefined, undefined, offer.id)
-         
+          this.outbox.addEvent(
+            "offerChangedState",
+            payload,
+            undefined,
+            undefined,
+            undefined,
+            offer.id
+          );
         }
       }
     );

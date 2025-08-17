@@ -24,6 +24,14 @@ export default  {
     },
     bot: {
         pollInterval: 20 * 1000
+    },
+    gameData: {
+        updateInterval: 1000 * 60 * 60 * 24, // 1 day
+        enableUpdate: true
+    },
+    stats: {
+        heartbeatIntervalMs: 30000,
+        deltaCheckIntervalMs: 5000
     }
 
 }

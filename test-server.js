@@ -535,6 +535,76 @@ app.get('/api/inventory/:steamId', (req, res) => {
     }
 })
 
+// Request inventory item info API endpoint
+app.post('/api/socket/requestInventoryItemInfo', express.json(), (req, res) => {
+    console.log(req.body)
+    const { assetId } = req.body;
+    
+    if (!assetId) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Asset ID is required'
+        });
+    }
+
+    log('info', 'Request inventory item info API called', { assetId });
+
+    const botIds = Array.from(connectedBots.keys());
+    if (botIds.length === 0) {
+        return res.status(404).json({ 
+            status: 'error', 
+            message: 'No connected bots available' 
+        });
+    }
+    
+    // Get random bot
+    const randomIndex = Math.floor(Math.random() * botIds.length);
+    const randomBotId = botIds[randomIndex];
+    const bot = connectedBots.get(randomBotId);
+    
+    if (!bot) {
+        return res.status(404).json({ 
+            status: 'error', 
+            message: 'Bot not found' 
+        });
+    }
+
+    try {
+        // Get the actual socket instance
+        const targetSocket = io.sockets.sockets.get(bot.socketId);
+        
+        if (!targetSocket) {
+            return res.status(404).json({ 
+                status: 'error', 
+                message: 'Socket connection not found' 
+            });
+        }
+
+        // Emit requestInventoryItemInfo event
+        targetSocket.emit('requestInventoryItemInfo', assetId, (response) => {
+            log('info', 'Inventory item info response received', { assetId, response });
+            
+            if (!response) {
+                return res.status(500).json({
+                    status: 'error',
+                    message: 'No response from bot'
+                });
+            }
+
+            // Return the response from the bot
+            res.json(response);
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            error: error instanceof Error ? error.message : String(error),
+            message: 'Failed to request inventory item info'
+        });
+        log('error', 'Error in requestInventoryItemInfo API route', { error: error.message, assetId });
+    }
+});
+
 app.post('/api/trade', express.json(), (req, res) => {
     const { userId64, items_to_receive, tradeUrl } = req.body;
     

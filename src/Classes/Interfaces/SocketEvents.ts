@@ -3,6 +3,8 @@ import DealDto from "../Dtos/DealDto";
 import CEconItem from "steamcommunity/classes/CEconItem";
 import { ExtendedMEconItemExchange } from "./ExtendedItem";
 import { TaskQueueResponse } from "../AbstractTaskQueue";
+import { InventoryItemInfo } from "../Inspect/GameData";
+import { BotStatsDelta, BotStatsSnapshot } from "./StatsSnapshot";
 export interface InventoryQueueResponse {
     status: InventoryStatus;
     error?: {
@@ -14,7 +16,7 @@ export interface InventoryQueueResponse {
     estimated_wait?: number;
     inventory?: CEconItem[];
 }
-export type InventoryStatus = 'ok' | 'error' | 'queued' | 'retrying' | 'bot_unavailable' | 'service_paused';
+export type InventoryStatus = 'ok' | 'error';
 
 export interface OutgoingActiveOffersPollData{
   offers: {[offerId: string]: {
@@ -98,6 +100,7 @@ export interface InventorySocketEventsOutgoing {
 export interface TradeSocketEventsIngoing {
   "newDeal": (payload: NewDealPayload, callback: ResponseCallback<TaskQueueResponse>) => void;
   "pauseTrade": (paused: boolean, cause: string | null, pauseEnd: number, callback?: ResponseCallback) => void;
+  "requestInventoryItemInfo": (assetId: string, callback: ResponseCallback<InventoryItemInfo>) => void;
   [key: string]: (...args:any[]) => void;
 }
 
@@ -106,6 +109,7 @@ export interface TradeSocketEventsOutgoing {
   "offerCreation": (payload: OfferCreationPayload, callback: ResponseCallback) => void;
   "offerChangedState": (payload: OfferChangeStatePayload, callback: ResponseCallback) => void;
   "tradesPaused": (paused: boolean, cause: string | null, pauseEnd: number) => void;
+  "inventoryItemInfo": (item: InventoryItemInfo, callback: ResponseCallback) => void;
    [key: string]: (...args:any[]) => void;
 }
 
@@ -123,12 +127,18 @@ export interface BotSocketEventsOutgoing {
    [key: string]: (...args:any[]) => void;
 }
 
+export interface StatEventsOutgoing {
+  "botStats": (snapshot: BotStatsSnapshot) => void;
+  "botStatsDelta": (delta: BotStatsDelta) => void;
+  [key: string]: (...args:any[]) => void;
+}
 export interface SocketEvents extends 
   InventorySocketEventsIngoing,
   InventorySocketEventsOutgoing,
   TradeSocketEventsIngoing,
   TradeSocketEventsOutgoing,
   BotSocketEventsIngoing,
+  StatEventsOutgoing,
   BotSocketEventsOutgoing {
      [key: string]: (...args:any[]) => void;
   }
@@ -143,6 +153,7 @@ export interface IngoingEvents extends
 export interface OutgoingEvents extends 
   InventorySocketEventsOutgoing,
   TradeSocketEventsOutgoing,
+  StatEventsOutgoing,
   BotSocketEventsOutgoing {
      [key: string]: (...args:any[]) => void;
   }
